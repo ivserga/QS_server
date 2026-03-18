@@ -1,0 +1,765 @@
+<!-- =========================================================================== -->
+<!--   ConfigWindow.xaml (c) 2012 Nikolay Moroshkin, http://www.moroshkin.com/   -->
+<!-- =========================================================================== -->
+
+<Window x:Class="QScalp.Windows.ConfigWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:uc="clr-namespace:QScalp.Windows.Controls"
+        Height="418" Width="463" WindowStartupLocation="CenterOwner">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Windows/Resources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Window.Style>
+        <StaticResource ResourceKey="ChildWindow" />
+    </Window.Style>
+
+    <!-- **************************************************************** -->
+
+    <Grid Style="{StaticResource TopContainer}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TabControl Grid.Row="0">
+
+            <!-- ******************************************************************** -->
+
+            <TabItem Header="Основные">
+                <StackPanel>
+                    <GroupBox Header="Рабочий путь терминала QUIK">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Name="quikFolder" />
+                            <Button Grid.Column="1" Content="..." Name="buttonFolderSelect" Width="25" Click="buttonFolderSelect_Click" />
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Header="Счет">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Идентификатор" />
+                            <TextBox Grid.Column="1" Name="account" />
+                            <Label Grid.Column="2" Content="Код клиента" Name="clientCodeLabel" />
+                            <TextBox Grid.Column="3" Name="clientCode" />
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Header="Инструмент">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Код бумаги" />
+                                <TextBox Grid.Column="1" Name="secCode" />
+                                <Label Grid.Column="2" Content="Код класса" />
+                                <TextBox Grid.Column="3" Name="classCode" />
+                                <Button Grid.Column="4" Content="..." Name="buttonSecSelect" Width="25" Click="buttonSecSelect_Click" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Шаг цены" />
+                                <uc:NumStepBox Grid.Column="1" x:Name="priceStep" />
+                                <Label Grid.Column="2" Content="Объем полной шкалы" />
+                                <uc:NumUpDown Grid.Column="3" x:Name="fullVolume" MinValue="1" />
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Горизонтальная сетка">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Шаг тонких линий" />
+                            <uc:NumUpDown Grid.Column="1" x:Name="grid1" />
+                            <Label Grid.Column="2" Content="Шаг толстых линий" />
+                            <uc:NumUpDown Grid.Column="3" x:Name="grid2" />
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Header="Окно привода">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Grid.Column="0" Content="Выводить поверх других окон" Name="windowTopMost" />
+                            <CheckBox Grid.Column="1" Content="Подтверждение при выходе" Name="confirmExit" />
+                        </Grid>
+                    </GroupBox>
+
+                </StackPanel>
+            </TabItem>
+
+            <!-- ******************************************************************** -->
+
+            <TabItem Header="Графики">
+                <StackPanel>
+
+                    <GroupBox Header="Лента сделок">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Минимальный объем" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="tradeVolume1" MinValue="1" />
+                                <Label Grid.Column="2" Content="Средний объем" />
+                                <uc:NumUpDown Grid.Column="3" x:Name="tradeVolume2" MinValue="1" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Большой объем" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="tradeVolume3" MinValue="1" />
+                                <Label Grid.Column="2" Content="Делитель б. объема" />
+                                <uc:NumUpDown Grid.Column="3" x:Name="tradeVolume3Div" MinValue="1" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="90" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Интервал сдвига при отсутствии новых сделок, мс" />
+                                <uc:NumUpDown Grid.Column="1" Increment="10" MinValue="50" x:Name="tradesTickInterval" />
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="График спреда">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Content="Масштаб по горизонтали" />
+                                <uc:NumUpDown Grid.Column="1" DecimalPlaces="1" MinValue="0" x:Name="spreadXScale" />
+                                <Label Grid.Column="2" Content="px/тик (0 - отключить график)" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Content="Интервал холостых тиков при отсутствии изменений, мс" IsEnabled="{Binding ElementName=spreadsTickInterval, Path=IsEnabled}" />
+                                <uc:NumUpDown Grid.Column="1" Increment="10" MinValue="50" x:Name="spreadsTickInterval" />
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+
+                </StackPanel>
+            </TabItem>
+
+            <!-- ******************************************************************** -->
+
+            <TabItem Header="Поводырь">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <GroupBox Header="Источники">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <ListView Name="guideList" SelectionMode="Single">
+                                <ListView.Resources>
+
+                                    <Style TargetType="ListViewItem">
+                                        <EventSetter Event="MouseDoubleClick" Handler="buttonEditGuideSrc_Click" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    </Style>
+
+                                    <DataTemplate x:Key="step">
+                                        <TextBlock HorizontalAlignment="Right" Text="{Binding Path=StrPriceStep}" />
+                                    </DataTemplate>
+
+                                    <DataTemplate x:Key="wnew">
+                                        <TextBlock HorizontalAlignment="Right" Text="{Binding Path=StrWnew}" />
+                                    </DataTemplate>
+
+                                    <DataTemplate x:Key="wsrc">
+                                        <TextBlock HorizontalAlignment="Right" Text="{Binding Path=StrWsrc}" />
+                                    </DataTemplate>
+                                </ListView.Resources>
+
+                                <ListView.View>
+                                    <GridView AllowsColumnReorder="False" ColumnHeaderContainerStyle="{StaticResource ListViewHeader}">
+                                        <GridViewColumn Width="95" DisplayMemberBinding="{Binding Path=StrSecCode}" Header="Код бумаги" />
+                                        <GridViewColumn Width="95" DisplayMemberBinding="{Binding Path=StrClassCode}" Header="Код класса" />
+                                        <GridViewColumn Width="70" CellTemplate="{StaticResource step}" Header="Шаг цены" />
+                                        <GridViewColumn Width="58" CellTemplate="{StaticResource wnew}" Header="Вес н.з." />
+                                        <GridViewColumn Width="58" CellTemplate="{StaticResource wsrc}" Header="Вес ист." />
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+
+                            <StackPanel Grid.Row="1" HorizontalAlignment="Right" Orientation="Horizontal" Style="{StaticResource ButtonsBlock}">
+                                <Button Width="75" Content="Добавить" Name="buttonAddGuideSrc" Click="buttonAddGuideSrc_Click" />
+                                <Button Width="95" Content="Редактировать" Name="buttonEditGuideSrc" Click="buttonEditGuideSrc_Click" IsEnabled="False" />
+                                <Button Width="75" Content="Удалить" Name="buttonDeleteGuideSrc" Click="buttonDeleteGuideSrc_Click" IsEnabled="False" />
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Header="Параметры графика" Grid.Row="1">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Минимальный интервал времени между тиками, мс" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="guideTickInterval" Increment="50" MinValue="0" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Масштаб по горизонтали" />
+                                <uc:NumUpDown Grid.Column="1" DecimalPlaces="1" MinValue="1" x:Name="guideXScale" />
+                                <Label Grid.Column="2" Content="по вертикали" />
+                                <uc:NumUpDown Grid.Column="3" DecimalPlaces="1" MinValue="1" x:Name="guideYScale" />
+                                <Label Grid.Column="4" Content="px/тик" />
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+
+                </Grid>
+            </TabItem>
+
+            <!-- ******************************************************************** -->
+
+            <TabItem Header="Настроение">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <GroupBox Header="Показатели">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <ListView Name="toneList" SelectionMode="Single">
+                                <ListView.Resources>
+                                    <Style TargetType="ListViewItem">
+                                        <EventSetter Event="MouseDoubleClick" Handler="buttonEditToneSrc_Click" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    </Style>
+
+                                    <DataTemplate x:Key="interval">
+                                        <TextBlock HorizontalAlignment="Right" Text="{Binding Path=StrInterval}" />
+                                    </DataTemplate>
+
+                                    <DataTemplate x:Key="fillVolume">
+                                        <TextBlock HorizontalAlignment="Right" Text="{Binding Path=StrFillVolume}" />
+                                    </DataTemplate>
+                                </ListView.Resources>
+
+                                <ListView.View>
+                                    <GridView AllowsColumnReorder="False" ColumnHeaderContainerStyle="{StaticResource ListViewHeader}">
+                                        <GridViewColumn Width="95" DisplayMemberBinding="{Binding Path=StrSecCode}" Header="Код бумаги" />
+                                        <GridViewColumn Width="95" DisplayMemberBinding="{Binding Path=StrClassCode}" Header="Код класса" />
+                                        <GridViewColumn Width="93" CellTemplate="{StaticResource interval}" Header="Интервал" />
+                                        <GridViewColumn Width="93" CellTemplate="{StaticResource fillVolume}" Header="Объем" />
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+
+                            <StackPanel Grid.Row="1" HorizontalAlignment="Right" Orientation="Horizontal" Style="{StaticResource ButtonsBlock}">
+                                <Button Width="75" Content="Добавить" Name="buttonAddToneSrc" Click="buttonAddToneSrc_Click" />
+                                <Button Width="95" Content="Редактировать" Name="buttonEditToneSrc" Click="buttonEditToneSrc_Click" IsEnabled="False" />
+                                <Button Width="75" Content="Удалить" Name="buttonDeleteToneSrc" Click="buttonDeleteToneSrc_Click" IsEnabled="False" />
+                                <Button Width="25" Content="&#x2191;" Name="buttonUpToneSrc" Click="buttonUpToneSrc_Click" IsEnabled="False" />
+                                <Button Width="25" Content="&#x2193;" Name="buttonDownToneSrc" Click="buttonDownToneSrc_Click" IsEnabled="False" />
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Header="Параметры" Grid.Row="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="75" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Размер индикатора по вертикали" />
+                            <uc:NumUpDown Grid.Column="1" x:Name="toneMeterHeight" Increment="5" MinValue="5" />
+                            <Label Grid.Column="2" Content="px" />
+                        </Grid>
+                    </GroupBox>
+
+                </Grid>
+            </TabItem>
+
+            <!-- ******************************************************************** -->
+
+            <TabItem Header="Кластеры">
+                <StackPanel>
+
+                    <GroupBox Header="Общее">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="160" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="База кластера" />
+                                <ComboBox Grid.Column="1" Name="clusterBase" />
+                                <Label Grid.Column="2" Content="величина" />
+                                <uc:NumUpDown Grid.Column="3" x:Name="clusterSize" Increment="1" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Кол-во кластеров" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="clustersCount" MinValue="0" />
+
+                                <ComboBox Grid.Column="3" Name="clusterLegend" SelectedIndex="0" Width="120">
+                                    <ComboBox.Resources>
+                                        <Style TargetType="{x:Type ComboBoxItem}">
+                                            <Setter Property="Control.Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                                                        <ContentPresenter />
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ComboBox.Resources>
+
+                                    <Label Content="Подписи" Visibility="Collapsed" />
+
+                                    <CheckBox Content="Объем" Name="clVolume" />
+                                    <CheckBox Content="Кол-во сделок" Name="clTicks" />
+                                    <CheckBox Content="Дельта" Name="clDelta" />
+                                    <CheckBox Content="Диапазон" Name="clRange" />
+                                    <ComboBoxItem Content="" />
+                                    <CheckBox Content="Время" Name="clTime" />
+                                </ComboBox>
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Цифровое представление">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="90" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Показывать" />
+                                <ComboBox Grid.Column="1" Name="clusterView" />
+                                <Label Grid.Column="2" Content="больше" />
+                                <uc:NumUpDown Grid.Column="3" x:Name="clusterValueFilter" MinValue="0" />
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Графическое представление">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Позазывать суммарный объем" />
+                                <ComboBox Grid.Column="1" Name="clusterFill" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Объем 1-й шкалы" IsEnabled="{Binding ElementName=clusterFillVolume1, Path=IsEnabled}" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="clusterFillVolume1" MinValue="1" />
+                                <Label Grid.Column="2" Content="Объем 2-й шкалы" IsEnabled="{Binding ElementName=clusterFillVolume2, Path=IsEnabled}" />
+                                <uc:NumUpDown Grid.Column="3" x:Name="clusterFillVolume2" MinValue="1" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Значение дельты для максимальной интенсивности цвета" IsEnabled="{Binding ElementName=clusterOpacityDelta, Path=IsEnabled}" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="clusterOpacityDelta" MinValue="1" />
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+
+            </TabItem>
+
+            <!-- ******************************************************************** -->
+
+            <TabItem Header="Торговые операции" Name="tabKeyBindings">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <ListView Name="keyBindings" SelectionMode="Single">
+                        <ListView.Resources>
+                            <Style TargetType="ListViewItem">
+                                <EventSetter Event="MouseDoubleClick" Handler="buttonEditKb_Click" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Margin" Value="0,0,5,1" />
+                            </Style>
+
+                            <DataTemplate x:Key="key">
+                                <TextBlock Text="&#x2022;" />
+                            </DataTemplate>
+
+                            <DataTemplate x:Key="offset">
+                                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Value}" Padding="5,0" />
+                            </DataTemplate>
+
+                            <DataTemplate x:Key="quantity">
+                                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Quantity}" Padding="5,0" />
+                            </DataTemplate>
+                        </ListView.Resources>
+
+                        <ListView.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Path=Name}" Background="#FFF5F5F5" Padding="2,1" Margin="2,0,2,1" FontWeight="SemiBold" />
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ListView.GroupStyle>
+
+                        <ListView.View>
+                            <GridView AllowsColumnReorder="False" ColumnHeaderContainerStyle="{StaticResource ListViewHeader}">
+                                <GridViewColumn Width="85" CellTemplate="{StaticResource key}" Header="Клавиша" />
+                                <GridViewColumn Width="100" DisplayMemberBinding="{Binding Path=Operation}" Header="Операция" />
+                                <GridViewColumn Width="80" DisplayMemberBinding="{Binding Path=Quote}" Header="Котировка" />
+                                <GridViewColumn Width="60" CellTemplate="{StaticResource offset}" Header="Отступ" />
+                                <GridViewColumn Width="60" CellTemplate="{StaticResource quantity}" Header="Объем" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <StackPanel Grid.Row="1" HorizontalAlignment="Right" Orientation="Horizontal" Style="{StaticResource ButtonsBlock}">
+                        <Button Width="75" Content="Добавить" Name="buttonAddKb" Click="buttonAddKb_Click" />
+                        <Button Width="95" Content="Редактировать" Name="buttonEditKb" Click="buttonEditKb_Click" IsEnabled="False" />
+                        <Button Width="75" Content="Удалить" Name="buttonDeleteKb" Click="buttonDeleteKb_Click" IsEnabled="False" />
+                        <Button Width="25" Content="&#x2191;" Name="buttonUpKb" Click="buttonUpKb_Click" IsEnabled="False" />
+                        <Button Width="25" Content="&#x2193;" Name="buttonDownKb" Click="buttonDownKb_Click" IsEnabled="False" />
+                    </StackPanel>
+
+                </Grid>
+            </TabItem>
+
+            <!-- ******************************************************************** -->
+
+            <TabItem Header="Управление">
+                <StackPanel>
+                    <GroupBox Header="Операции">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Блокировка выполнения новых торговых операций" />
+                            <uc:KeyBox Grid.Column="1" x:Name="keyBlockKey" />
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Header="Просмотр">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="Листание вверх" />
+                            <uc:KeyBox Grid.Row="0" Grid.Column="1" x:Name="keyPageUp" />
+                            <Label Grid.Row="1" Grid.Column="0" Content="Листание вниз" />
+                            <uc:KeyBox Grid.Row="1" Grid.Column="1" x:Name="keyPageDown" />
+                            <Label Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="Центровать спред" />
+                            <uc:KeyBox Grid.Row="0" Grid.Column="3" Grid.RowSpan="2" x:Name="keyCenterSpread" />
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Header="Мышь">
+                        <StackPanel>
+                            <CheckBox Grid.Column="0" Content="Выставлять заявки с помощью клавиш мыши" Name="mouseEnabled" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="90" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Проскальзывание для стоп-заявок, пт" IsEnabled="{Binding ElementName=mouseSlippage, Path=IsEnabled}" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="mouseSlippage" IsEnabled="{Binding ElementName=mouseEnabled, Path=IsChecked}" />
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Рабочий объем">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="Текущее значение" />
+                            <uc:NumUpDown Grid.Row="0" Grid.Column="1" x:Name="workSize" MinValue="0" />
+                            <Label Grid.Row="1" Grid.Column="0" Content="Величина приращения" />
+                            <uc:NumUpDown Grid.Row="1" Grid.Column="1" x:Name="workSizeDelta" MinValue="0" />
+
+                            <Label Grid.Row="0" Grid.Column="2" Content="Увеличить" />
+                            <uc:KeyBox Grid.Row="0" Grid.Column="3" x:Name="keyWorkSizeInc" />
+                            <Label Grid.Row="1" Grid.Column="2" Content="Уменьшить" />
+                            <uc:KeyBox Grid.Row="1" Grid.Column="3" x:Name="keyWorkSizeDec" />
+                        </Grid>
+                    </GroupBox>
+
+                </StackPanel>
+            </TabItem>
+
+            <!-- ******************************************************************** -->
+
+            <TabItem Header="Позиция" Name="tabPosition">
+                <StackPanel>
+
+                    <GroupBox Header="Автозакрытие">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Стоп лосс, пт (0 - откл.)" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="stopOffset" MinValue="0" />
+                                <Label Grid.Column="2" Content="Проскальзывание, пт" IsEnabled="{Binding ElementName=stopSlippage, Path=IsEnabled}" />
+                                <uc:NumUpDown Grid.Column="3" x:Name="stopSlippage" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="75" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Тейк-профит, пт (0 - откл.)" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="takeOffset" MinValue="0" />
+                                <CheckBox Grid.Column="3" Content="Подтягивать стоп" Name="stopTrail" />
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Торговый журнал">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Объединять сделки, совершенные с интервалом" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="singleTradeTimeout" MinValue="0" />
+                                <Label Grid.Column="2" Content="сек." />
+                            </Grid>
+
+                            <CheckBox Grid.Column="0" Content="Сохранять журнал в файл при выходе" Name="tradeLogFlush" />
+                        </StackPanel>
+                    </GroupBox>
+
+                </StackPanel>
+            </TabItem>
+
+            <!-- ******************************************************************** -->
+
+            <TabItem Header="Прочее">
+                <StackPanel>
+
+                    <GroupBox Header="REST API">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="URL сервера" />
+                                <TextBox Grid.Column="1" Name="apiBaseUrl" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="API ключ" />
+                                <PasswordBox Grid.Column="1" Name="apiKey" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="WebSocket URL" />
+                                <TextBox Grid.Column="1" Name="wsBaseUrl" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Дата данных" />
+                                <TextBox Grid.Column="1" Name="apiDataDate" ToolTip="Формат YYYY-MM-DD, пусто = сегодня" />
+                                <CheckBox Grid.Column="2" Content="Режим отладки WebSocket" Name="wsDebugMode" Margin="20,0,0,0" VerticalAlignment="Center" />
+                            </Grid>
+                            <CheckBox Content="Не загружать исторические данные за текущий день" Name="skipHistoricalData" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="DDE (устаревший)">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="100" />
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Имя DDE сервера" />
+                            <TextBox Grid.Column="1" Name="ddeServerName" />
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Header="Выполнение операций">
+                        <StackPanel>
+                            <CheckBox Content="Вести протокол взаимодействия с терминалом" Name="enableQuikLog" />
+                            <CheckBox Content="Принимать все сделки (не рекомендуется)" Name="acceptAllTrades" />
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Эмулятор">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Задержка исполнения заявок, мс" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="emulatorDelayMin" Increment="50" MinValue="50" />
+                                <Label Grid.Column="2" Content="&#8211;" />
+                                <uc:NumUpDown Grid.Column="3" x:Name="emulatorDelayMax" Increment="50" MinValue="50" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="90" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Максимальный размер позиции" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="emulatorLimit" Increment="1" MinValue="0" />
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Отображение текста">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Шрифт" />
+                            <TextBox Grid.Column="1" Name="fontFamily" />
+                            <Label Grid.Column="2" Content="Размер" />
+                            <uc:NumUpDown Grid.Column="3" x:Name="fontSize" Increment="0.5" MinValue="5" MaxValue="50" DecimalPlaces="1" />
+                        </Grid>
+                    </GroupBox>
+
+                </StackPanel>
+            </TabItem>
+
+            <!-- ******************************************************************** -->
+
+        </TabControl>
+
+        <StackPanel Grid.Row="1" HorizontalAlignment="Right" Orientation="Horizontal" Margin="0,8,0,0">
+            <Button Style="{StaticResource TopButton}" Content="OK" IsDefault="True" Name="buttonOk" Click="buttonOk_Click" />
+            <Button Style="{StaticResource TopButton}" Content="Отмена" IsCancel="True" Margin="8,0" Name="buttonCancel" Click="buttonCancel_Click" />
+            <Button Style="{StaticResource TopButton}" Content="Применить" IsEnabled="False" Name="buttonApply" Click="buttonApply_Click" />
+        </StackPanel>
+    </Grid>
+
+    <!-- **************************************************************** -->
+</Window>

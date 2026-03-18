@@ -1,0 +1,146 @@
+﻿<!-- =========================================================================== -->
+<!--  TradeLogWindow.xaml (c) 2012 Nikolay Moroshkin, http://www.moroshkin.com/  -->
+<!-- =========================================================================== -->
+
+<Window x:Class="QScalp.Windows.TradeLogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Торговый журнал" WindowStyle="ToolWindow" ShowActivated="False"
+        ResizeMode="CanResizeWithGrip" MinWidth="515" MaxWidth="515" MinHeight="109">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Window.Style>
+        <StaticResource ResourceKey="ChildWindow" />
+    </Window.Style>
+
+    <!-- **************************************************************** -->
+
+    <Grid Style="{StaticResource TopContainer}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <ListView Grid.ColumnSpan="3" Name="trades" Margin="1" SelectionMode="Multiple" VirtualizingStackPanel.VirtualizationMode="Recycling">
+            <ListView.Resources>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+
+                <DataTemplate x:Key="openTime">
+                    <TextBlock HorizontalAlignment="Center" Text="{Binding Path=OpenTime}" />
+                </DataTemplate>
+                <DataTemplate x:Key="openQty">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=OpenQty}" />
+                </DataTemplate>
+                <DataTemplate x:Key="openPrice">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=OpenPrice}" />
+                </DataTemplate>
+
+                <DataTemplate x:Key="closeTime">
+                    <TextBlock HorizontalAlignment="Center" Text="{Binding Path=CloseTime}" />
+                </DataTemplate>
+                <DataTemplate x:Key="closeQty">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=CloseQty}" />
+                </DataTemplate>
+                <DataTemplate x:Key="closePrice">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=ClosePrice}" />
+                </DataTemplate>
+
+                <DataTemplate x:Key="result">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Result}" />
+                </DataTemplate>
+
+                <DataTemplate x:Key="sep" />
+            </ListView.Resources>
+
+            <ListView.View>
+                <GridView AllowsColumnReorder="False" ColumnHeaderContainerStyle="{StaticResource ListViewHeader}">
+                    <GridViewColumn Width="65" CellTemplate="{StaticResource openTime}" Header="Открытие" />
+                    <GridViewColumn Width="50" CellTemplate="{StaticResource openQty}" Header="Кол-во" />
+                    <GridViewColumn Width="60" CellTemplate="{StaticResource openPrice}" Header="Цена" />
+
+                    <GridViewColumn Width="25" CellTemplate="{StaticResource sep}" />
+
+                    <GridViewColumn Width="65" CellTemplate="{StaticResource closeTime}" Header="Закрытие" />
+                    <GridViewColumn Width="50" CellTemplate="{StaticResource closeQty}" Header="Кол-во" />
+                    <GridViewColumn Width="60" CellTemplate="{StaticResource closePrice}" Header="Цена" />
+
+                    <GridViewColumn Width="25" CellTemplate="{StaticResource sep}" />
+
+                    <GridViewColumn Width="60" CellTemplate="{StaticResource result}" Header="Результат" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <GroupBox Grid.Row="1" Grid.Column="0" Header="Статистика">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Column="0" Content="Кол-во трейдов:" />
+                    <TextBlock Grid.Column="1" HorizontalAlignment="Right" Name="tradesCount" />
+                </Grid>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Column="0" Content="Оборот, лотов:" />
+                    <TextBlock Grid.Column="1" HorizontalAlignment="Right" Name="turnover" />
+                </Grid>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Grid.Row="1" Grid.Column="1" Header="Результат на 1 лот">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Grid.Row="0" Grid.Column="0" Content="Всего, пт:" />
+                <TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" Name="overallPerLot" />
+                <Label Grid.Row="1" Grid.Column="0" Content="Средний, пт:" />
+                <TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Name="averagePerLot" />
+            </Grid>
+        </GroupBox>
+
+        <GroupBox Grid.Row="1" Grid.Column="2" Header="Общий результат">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Grid.Row="0" Grid.Column="0" Content="Всего, пт:" />
+                <TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" Name="overall" />
+                <Label Grid.Row="1" Grid.Column="0" Content="Средний, пт:" />
+                <TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Name="average" />
+            </Grid>
+        </GroupBox>
+
+    </Grid>
+
+    <!-- **************************************************************** -->
+</Window>

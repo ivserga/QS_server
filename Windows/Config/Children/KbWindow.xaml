@@ -1,0 +1,71 @@
+﻿<!-- ========================================================================= -->
+<!--    KbWindow.xaml (c) 2012 Nikolay Moroshkin, http://www.moroshkin.com/    -->
+<!-- ========================================================================= -->
+
+<Window x:Class="QScalp.Windows.Config.KbWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:uc="clr-namespace:QScalp.Windows.Controls"
+        Title="Торговая операция" WindowStartupLocation="CenterOwner"
+        SizeToContent="Height" Width="450">
+
+    <Window.Resources>
+        <ResourceDictionary Source="/Windows/Resources.xaml" />
+    </Window.Resources>
+
+    <Window.Style>
+        <StaticResource ResourceKey="ChildWindow" />
+    </Window.Style>
+
+    <!-- **************************************************************** -->
+
+    <StackPanel Margin="14">
+        <Border Style="{StaticResource BorderContainer}">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <ComboBox Grid.Column="0" Name="operation"/>
+                    <Label Grid.Column="1" Content="при" />
+                    <ComboBox Grid.Column="2" Name="keyEvent" IsEnabled="{Binding ElementName=actionKey, Path=IsEnabled}" />
+                    <Label Grid.Column="3" Content="клавиши" />
+                    <uc:KeyBox Grid.Column="4" x:Name="actionKey" />
+                </Grid>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Column="0" Content="Цена в заявке" IsEnabled="{Binding ElementName=baseQuote, Path=IsEnabled}" />
+                    <ComboBox Grid.Column="1" Name="baseQuote" />
+                </Grid>
+
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Отступ цены (проскальзывание), пт" IsEnabled="{Binding ElementName=offset, Path=IsEnabled}" />
+                    <uc:NumUpDown x:Name="offset" Width="80" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Объем операции" IsEnabled="{Binding ElementName=quantity, Path=IsEnabled}" />
+                    <ComboBox Name="qtyType" Width="140" IsEnabled="{Binding ElementName=quantity, Path=IsEnabled}" />
+                    <uc:NumUpDown x:Name="quantity" Width="80" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Margin="0,14,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Style="{StaticResource TopButton}" IsDefault="True" Name="buttonOk" Click="buttonOk_Click" />
+            <Button Style="{StaticResource TopButton}" Content="Отмена" IsCancel="True" Margin="8,0,0,0" />
+        </StackPanel>
+    </StackPanel>
+
+    <!-- **************************************************************** -->
+</Window>

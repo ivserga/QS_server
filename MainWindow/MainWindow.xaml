@@ -1,0 +1,107 @@
+﻿<!-- =========================================================================== -->
+<!--    MainWindow.xaml (c) 2012 Nikolay Moroshkin, http://www.moroshkin.com/    -->
+<!-- =========================================================================== -->
+
+<Window x:Class="QScalp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:QScalp.View"
+        ResizeMode="CanResizeWithGrip" SnapsToDevicePixels="True" UseLayoutRounding="True" MinHeight="90">
+
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Text" Value="?" />
+        </Style>
+        <Style TargetType="MenuItem">
+            <Setter Property="Padding" Value="6,3,2,3" />
+        </Style>
+        <Style TargetType="StatusBarItem" x:Key="Indicator">
+            <Setter Property="Background" Value="#FF555555" />
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <StatusBar Name="sb" Height="23" BorderThickness="0,1,0,0" DockPanel.Dock="Bottom" BorderBrush="#FF919191">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="1.5*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+
+            <StatusBarItem Grid.Column="0" Style="{StaticResource Indicator}" x:Name="tradesStatus" ToolTip="DDE канал: 'trades'" Margin="5,0,0,0" />
+            <StatusBarItem Grid.Column="1" Style="{StaticResource Indicator}" x:Name="stockStatus" ToolTip="DDE канал: 'stock'" Margin="5,0,0,0" />
+            <StatusBarItem Grid.Column="2" Style="{StaticResource Indicator}" x:Name="quikStatus" Margin="5,0" />
+
+            <StatusBarItem Grid.Column="3" Padding="0">
+                <Menu Background="{x:Null}" IsMainMenu="False">
+                    <MenuItem Header="меню" BorderBrush="#FFD9D9D9" BorderThickness="1" Name="menu" Style="{x:Null}">
+                        <MenuItem Header="О программе" Click="MenuAbout_Click" />
+                        <Separator/>
+                        <MenuItem Name="menuSaveConf" Header="Выгрузить настройки" Click="MenuSaveConf_Click" />
+                        <MenuItem Name="menuLoadConf" Header="Загрузить настройки" Click="MenuLoadConf_Click" />
+                        <Separator/>
+                        <MenuItem Name="menuSettings" Header="Настройки" Click="MenuSettings_Click" />
+                        <Separator/>
+                        <MenuItem Name="menuTradeLog" Header="Показывать журнал" IsCheckable="True" Click="MenuTradeLog_Click" />
+                        <Separator/>
+                        <MenuItem Name="menuEmulation" Header="Эмуляция терминала" IsCheckable="True" Click="MenuEmulation_Click" />
+                        <Separator/>
+                        <MenuItem Header="Очистить">
+                            <MenuItem Name="menuDropPos" Header="Позицию" Click="MenuDropPos_Click" />
+                            <MenuItem Name="menuClearGuide" Header="Поводырь" Click="MenuClearGuide_Click" />
+                            <MenuItem Name="menuClearLevels" Header="Уровни" Click="MenuClearLevels_Click" />
+                        </MenuItem>
+                        <Separator/>
+                        <MenuItem Name="menuExit" Header="Выход" Click="MenuExit_Click" />
+                    </MenuItem>
+                </Menu>
+            </StatusBarItem>
+
+            <StatusBarItem Grid.Column="4" HorizontalAlignment="Center" ToolTip="Автоцентровка спреда">
+                <TextBlock Name="acStatus" />
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="5" HorizontalAlignment="Center" ToolTip="Рабочий объем" MouseDown="WorkSizeStatusClick">
+                <TextBlock Name="wsStatus" />
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="6" HorizontalAlignment="Center" ToolTip="Индикатор клавиатуры" Name="keyStatusItem" MouseDown="KeyStatusClick">
+                <TextBlock Name="keyStatus" />
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="7" HorizontalAlignment="Center">
+                <TextBlock Name="opqStatus" />
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="8" HorizontalAlignment="Center" MouseDown="PosStatusClick">
+                <TextBlock Name="posStatus" ToolTip="Рыночная позиция" />
+            </StatusBarItem>
+
+            <StatusBarItem Grid.Column="9" HorizontalAlignment="Right" MouseDown="ResultStatusClick">
+                <TextBlock Name="resultStatus" ToolTip="Средний результат на 1 лот / Кол-во трейдов / Результат предыдущего трейда" />
+            </StatusBarItem>
+
+            <StatusBarItem Grid.Column="10" Padding="0">
+                <ResizeGrip Visibility="Hidden" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <!-- ******************************************************************** -->
+
+        <local:ScalpView x:Name="sv" />
+
+        <!-- ******************************************************************** -->
+    </DockPanel>
+</Window>

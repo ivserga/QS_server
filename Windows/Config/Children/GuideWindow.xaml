@@ -1,0 +1,73 @@
+﻿<!-- ============================================================================ -->
+<!--    GuideWindow.xaml (c) 2011 Nikolay Moroshkin, http://www.moroshkin.com/    -->
+<!-- ============================================================================ -->
+
+<Window x:Class="QScalp.Windows.Config.GuideWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:uc="clr-namespace:QScalp.Windows.Controls"
+        Title="Источник поводыря" WindowStartupLocation="CenterOwner" SizeToContent="WidthAndHeight">
+
+    <Window.Resources>
+        <ResourceDictionary Source="/Windows/Resources.xaml" />
+    </Window.Resources>
+
+    <Window.Style>
+        <StaticResource ResourceKey="ChildWindow" />
+    </Window.Style>
+
+    <!-- **************************************************************** -->
+
+    <StackPanel Margin="14">
+        <Border Style="{StaticResource BorderContainer}">
+            <StackPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="105" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Row="0" Grid.Column="0" Content="Код бумаги" />
+                    <TextBox Grid.Row="0" Grid.Column="1" Name="secCode" TextChanged="SecCodeChanged" />
+                    <Label Grid.Row="1" Grid.Column="0" Content="Код класса" />
+                    <TextBox Grid.Row="1" Grid.Column="1" Name="classCode" />
+                    <Label Grid.Row="2" Grid.Column="0" Content="Шаг цены" />
+                    <uc:NumStepBox Grid.Row="2" Grid.Column="1" x:Name="priceStep" />
+                    <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="3" Content="..." Name="buttonSecSelect" Width="25" Click="buttonSecSelect_Click" />
+                </Grid>
+
+                <Separator Margin="7,10" />
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Row="0"  Grid.Column="0" Content="Вес нового значения" />
+                    <uc:NumUpDown Grid.Row="0" Grid.Column="1" x:Name="wnew" DecimalPlaces="2" Increment="0.05" MinValue="0.05" MaxValue="1" Value="1" />
+                    <Label  Grid.Row="1" Grid.Column="0" Content="Вес источника" />
+                    <uc:NumUpDown Grid.Row="1" Grid.Column="1" x:Name="wsrc" DecimalPlaces="2" Increment="0.05" Value="1" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Margin="0,14,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Grid.Column="1" Style="{StaticResource TopButton}" IsDefault="True" Name="buttonOk" Click="buttonOk_Click" IsEnabled="False" />
+            <Button Grid.Column="2" Style="{StaticResource TopButton}" Content="Отмена" IsCancel="True" Margin="8,0,0,0" />
+        </StackPanel>
+    </StackPanel>
+
+    <!-- **************************************************************** -->
+</Window>

@@ -1,0 +1,31 @@
+﻿<!-- =========================================================================== -->
+<!--  NumUpDownBase.xaml (c) 2011 Nikolay Moroshkin, http://www.moroshkin.com/   -->
+<!-- =========================================================================== -->
+
+<UserControl x:Class="QScalp.Windows.Controls.NumUpDownBase"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="22" >
+
+    <UserControl.Resources>
+        <Style TargetType="RepeatButton">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="0" Style="{x:Null}">
+        <TextBox Margin="0" Name="tb" PreviewKeyDown="tb_PreviewKeyDown" LostKeyboardFocus="tb_LostKeyboardFocus" Style="{x:Null}" />
+        <Viewbox DockPanel.Dock="Right" HorizontalAlignment="Right" Name="bb" Style="{x:Null}">
+            <StackPanel Width="40" Margin="0" Style="{x:Null}">
+                <RepeatButton Content="&#9650;" Name="buttonUp" Click="ButtonUpClick" />
+                <RepeatButton Content="&#9660;" Name="buttonDown" Click="ButtonDownClick" />
+            </StackPanel>
+        </Viewbox>
+
+    </Grid>
+
+</UserControl>
