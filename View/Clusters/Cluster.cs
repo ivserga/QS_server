@@ -144,6 +144,13 @@ namespace QScalp.View.ClustersSpace
 
     public void GetVolumeDistribution(out long volumeAbove, out long volumeBelow)
     {
+      GetVolumeDistribution(lastPrice, out volumeAbove, out volumeBelow);
+    }
+
+    // **********************************************************************
+
+    public void GetVolumeDistribution(int refPrice, out long volumeAbove, out long volumeBelow)
+    {
       volumeAbove = 0;
       volumeBelow = 0;
 
@@ -151,11 +158,21 @@ namespace QScalp.View.ClustersSpace
       {
         long cellVol = kvp.Value.BuyVolume + kvp.Value.SellVolume;
 
-        if(kvp.Key > lastPrice)
+        if(kvp.Key > refPrice)
           volumeAbove += cellVol;
-        else if(kvp.Key < lastPrice)
+        else if(kvp.Key < refPrice)
           volumeBelow += cellVol;
       }
+    }
+
+    // **********************************************************************
+
+    public long GetCellVolume(int price)
+    {
+      CCell cell;
+      if(cells.TryGetValue(price, out cell))
+        return cell.BuyVolume + cell.SellVolume;
+      return 0;
     }
 
     // **********************************************************************

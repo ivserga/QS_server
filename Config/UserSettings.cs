@@ -20,6 +20,13 @@ namespace QScalp
     public string ApiDataDate = "";  // Дата загрузки данных (YYYY-MM-DD), пусто = сегодня
 
     // **********************************************************************
+    // *                          QScalp Server                             *
+    // **********************************************************************
+
+    public string ServerUrl = "";  // URL сервера QScalp (ws://host:port/)
+    public bool UseServer = false; // Подключаться через QScalp.Server вместо напрямую
+
+    // **********************************************************************
     // *                            WebSocket                               *
     // **********************************************************************
 
@@ -27,6 +34,7 @@ namespace QScalp
     public bool UseWebSocket = true;  // Использовать WebSocket для real-time (иначе polling)
     public bool WsDebugMode = false;  // Режим отладки WebSocket (вывод всех сообщений)
     public bool SkipHistoricalData = false;  // Не загружать исторические данные за текущий день
+    public int TradeFilterTicks = 0;  // Расширение фильтра сделок за пределы спреда (пунктов ниже bid / выше ask), 0 = строго спред
 
     // **********************************************************************
     // *                              QUIK & DDE                            *
@@ -130,6 +138,11 @@ namespace QScalp
     public int ClusterFillVolume2 = 1500;
 
     public double ClusterWidth = 51;
+
+    public bool ClusterSoundAlerts = true;
+    public bool ClusterAlertAbsorption = true;
+    public bool ClusterAlertClimax = true;
+    public bool ClusterAlertRejection = true;
 
     // **********************************************************************
     // *                              Управление                            *

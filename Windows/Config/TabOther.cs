@@ -12,13 +12,18 @@ namespace QScalp.Windows
 
     void InitOther()
     {
-      // REST API / WebSocket
+      // QScalp Server
+      serverUrl.Text = cfg.u.ServerUrl;
+      useServer.IsChecked = cfg.u.UseServer;
+
+      // REST API / WebSocket (прямое подключение)
       apiBaseUrl.Text = cfg.u.ApiBaseUrl;
       apiKey.Password = cfg.u.ApiKey;
       wsBaseUrl.Text = cfg.u.WsBaseUrl;
       apiDataDate.Text = cfg.u.ApiDataDate;
       wsDebugMode.IsChecked = cfg.u.WsDebugMode;
       skipHistoricalData.IsChecked = cfg.u.SkipHistoricalData;
+      tradeFilterTicks.Value = cfg.u.TradeFilterTicks;
 
       // DDE (устаревший)
       ddeServerName.Text = cfg.u.DdeServerName;
@@ -58,13 +63,18 @@ namespace QScalp.Windows
 
     void ApplyOther()
     {
-      // REST API / WebSocket
+      // QScalp Server
+      cfg.u.ServerUrl = serverUrl.Text.Trim();
+      cfg.u.UseServer = useServer.IsChecked == true;
+
+      // REST API / WebSocket (прямое подключение)
       cfg.u.ApiBaseUrl = apiBaseUrl.Text;
       cfg.u.ApiKey = apiKey.Password;
       cfg.u.WsBaseUrl = wsBaseUrl.Text;
       cfg.u.ApiDataDate = apiDataDate.Text.Trim();
       cfg.u.WsDebugMode = wsDebugMode.IsChecked == true;
       cfg.u.SkipHistoricalData = skipHistoricalData.IsChecked == true;
+      cfg.u.TradeFilterTicks = (int)tradeFilterTicks.Value;
 
       // DDE (устаревший)
       cfg.u.DdeServerName = ddeServerName.Text;

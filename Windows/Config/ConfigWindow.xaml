@@ -414,6 +414,25 @@
                         </StackPanel>
                     </GroupBox>
 
+                    <GroupBox Header="Звуковые оповещения">
+                        <StackPanel>
+                            <CheckBox Content="Включить звуковые оповещения" Name="clusterSoundAlerts" />
+                            <Grid Margin="16,4,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox Grid.Column="0" Content="Поглощение" Name="clusterAlertAbsorption"
+                                          IsEnabled="{Binding ElementName=clusterSoundAlerts, Path=IsChecked}" />
+                                <CheckBox Grid.Column="1" Content="Кульминация" Name="clusterAlertClimax"
+                                          IsEnabled="{Binding ElementName=clusterSoundAlerts, Path=IsChecked}" />
+                                <CheckBox Grid.Column="2" Content="Отторжение" Name="clusterAlertRejection"
+                                          IsEnabled="{Binding ElementName=clusterSoundAlerts, Path=IsChecked}" />
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+
                     <GroupBox Header="Графическое представление">
                         <StackPanel>
                             <Grid>
@@ -649,7 +668,21 @@
             <TabItem Header="Прочее">
                 <StackPanel>
 
-                    <GroupBox Header="REST API">
+                    <GroupBox Header="QScalp Server">
+                        <StackPanel>
+                            <CheckBox Content="Подключаться через QScalp Server (вместо прямого подключения к API)" Name="useServer" VerticalAlignment="Center" />
+                            <Grid Margin="0,4,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Адрес сервера" />
+                                <TextBox Grid.Column="1" Name="serverUrl" ToolTip="Пример: ws://192.168.1.100:9500/" />
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="REST API (прямое подключение)">
                         <StackPanel>
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -686,6 +719,16 @@
                                 <CheckBox Grid.Column="2" Content="Режим отладки WebSocket" Name="wsDebugMode" Margin="20,0,0,0" VerticalAlignment="Center" />
                             </Grid>
                             <CheckBox Content="Не загружать исторические данные за текущий день" Name="skipHistoricalData" VerticalAlignment="Center" />
+                            <Grid Margin="0,4,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Фильтр сделок за спредом, пт" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="tradeFilterTicks" MinValue="-1" />
+                                <Label Grid.Column="2" Content="(-1 = откл., 0 = строго спред)" />
+                            </Grid>
                         </StackPanel>
                     </GroupBox>
 

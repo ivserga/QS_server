@@ -47,7 +47,9 @@ namespace QScalp
       {
         // ------------------------------------------------
 
-        if(cfg.u.DdeServerName != old.DdeServerName
+        if(cfg.u.UseServer != old.UseServer
+          || cfg.u.ServerUrl != old.ServerUrl
+          || cfg.u.DdeServerName != old.DdeServerName
           || cfg.u.ApiBaseUrl != old.ApiBaseUrl
           || cfg.u.WsBaseUrl != old.WsBaseUrl
           || cfg.u.ApiKey != old.ApiKey)

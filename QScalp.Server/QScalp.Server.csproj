@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>QScalp.Server</RootNamespace>
+    <AssemblyName>QScalp.Server</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\QScalp.Shared\QScalp.Shared.csproj" />
+  </ItemGroup>
+</Project>

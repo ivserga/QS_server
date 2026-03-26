@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using QScalp.Connector.RestApi;
 using QScalp.Connector.WebSocket;
+using QScalp.Connector.ServerConnection;
 
 namespace QScalp.Connector
 {
@@ -14,15 +15,22 @@ namespace QScalp.Connector
     // **********************************************************************
 
     private WebSocketDataProvider _wsProvider;
+    private ServerDataProvider _serverProvider;
 
     private readonly IDataReceiver _receiver;
     private readonly TermManager _tmgr;
 
     // **********************************************************************
 
-    // Публичные свойства для совместимости с UI
-    public bool IsConnected => _wsProvider?.IsConnected ?? false;
-    public bool IsError => _wsProvider?.IsError ?? false;
+    public bool IsConnected =>
+      cfg.u.UseServer
+        ? (_serverProvider?.IsConnected ?? false)
+        : (_wsProvider?.IsConnected ?? false);
+
+    public bool IsError =>
+      cfg.u.UseServer
+        ? (_serverProvider?.IsError ?? false)
+        : (_wsProvider?.IsError ?? false);
 
     // **********************************************************************
 
@@ -36,7 +44,28 @@ namespace QScalp.Connector
 
     public void Connect()
     {
-      // Читаем настройки из конфига
+      if (cfg.u.UseServer)
+      {
+        ConnectViaServer();
+      }
+      else
+      {
+        ConnectDirect();
+      }
+    }
+
+    // **********************************************************************
+
+    private void ConnectViaServer()
+    {
+      _serverProvider = new ServerDataProvider(_receiver, _tmgr);
+      _serverProvider.Connect();
+    }
+
+    // **********************************************************************
+
+    private void ConnectDirect()
+    {
       string apiBaseUrl = cfg.u.ApiBaseUrl;
       string wsBaseUrl = cfg.u.WsBaseUrl;
       string apiKey = cfg.u.ApiKey;
@@ -44,8 +73,8 @@ namespace QScalp.Connector
       string secKey = cfg.u.SecCode + cfg.u.ClassCode;
       bool debugMode = cfg.u.WsDebugMode;
       bool skipHistoricalData = cfg.u.SkipHistoricalData;
+      int filterTicks = cfg.u.TradeFilterTicks;
 
-      // Создаем WebSocket провайдер
       _wsProvider = new WebSocketDataProvider(
         apiBaseUrl,
         wsBaseUrl,
@@ -55,9 +84,9 @@ namespace QScalp.Connector
         _receiver,
         _tmgr,
         debugMode,
-        skipHistoricalData);
+        skipHistoricalData,
+        filterTicks);
 
-      // Запускаем асинхронно (загрузка snapshot + WebSocket подключение)
       Task.Run(async () =>
       {
         try
@@ -75,6 +104,12 @@ namespace QScalp.Connector
 
     public void Disconnect()
     {
+      if (_serverProvider != null)
+      {
+        _serverProvider.Dispose();
+        _serverProvider = null;
+      }
+
       if (_wsProvider != null)
       {
         Task.Run(async () =>
@@ -85,7 +120,6 @@ namespace QScalp.Connector
           }
           catch
           {
-            // Игнорируем ошибки при остановке
           }
         }).Wait(TimeSpan.FromSeconds(5));
         

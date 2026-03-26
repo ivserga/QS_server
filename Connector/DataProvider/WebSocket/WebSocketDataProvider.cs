@@ -32,6 +32,7 @@ namespace QScalp.Connector.WebSocket
         private readonly string _secKey;
         private readonly bool _debugMode;
         private readonly bool _skipHistoricalData;
+        private readonly int _filterTicks;
         private StreamWriter _debugLog;
         
         // Синхронизация: последние обработанные sequence numbers
@@ -67,7 +68,8 @@ namespace QScalp.Connector.WebSocket
             IDataReceiver receiver,
             TermManager tmgr,
             bool debugMode = false,
-            bool skipHistoricalData = false)
+            bool skipHistoricalData = false,
+            int filterTicks = 0)
         {
             _ticker = ticker;
             _secKey = secKey;
@@ -75,6 +77,7 @@ namespace QScalp.Connector.WebSocket
             _tmgr = tmgr;
             _debugMode = debugMode;
             _skipHistoricalData = skipHistoricalData;
+            _filterTicks = filterTicks;
             
             if (_debugMode)
             {
@@ -583,13 +586,13 @@ namespace QScalp.Connector.WebSocket
             int ask = _tmgr.AskPrice;
             int bid = _tmgr.BidPrice;
 
-            if (ask > 0 && bid > 0 && (intPrice > ask || intPrice < bid))
+            if (_filterTicks >= 0 && ask > 0 && bid > 0 && (intPrice > ask + _filterTicks || intPrice < bid - _filterTicks))
             {
                 _filteredTradeCount++;
                 if (_debugMode && (_filteredTradeCount <= 5 || _filteredTradeCount % 500 == 0))
                 {
                     Dbg($"[Filter] Trade #{_filteredTradeCount} skipped: price={tr.Price} " +
-                        $"outside NBBO [{Price.GetRaw(bid):F2} - {Price.GetRaw(ask):F2}]");
+                        $"outside NBBO+{_filterTicks} [{Price.GetRaw(bid - _filterTicks):F2} - {Price.GetRaw(ask + _filterTicks):F2}]");
                 }
                 return;
             }

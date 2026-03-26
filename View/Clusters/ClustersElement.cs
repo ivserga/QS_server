@@ -252,11 +252,24 @@ namespace QScalp.View
 
       ClusterAnalyzer.Signal signal = ClusterAnalyzer.Analyze(c1, c2, c3);
       if(signal != ClusterAnalyzer.Signal.None)
+      {
         vmgr.MsgQueue.Enqueue(new Message(ClusterAnalyzer.FormatMessage(signal, c3)));
+        SoundAlert.PlayAbsorption();
+      }
 
       ClusterAnalyzer.ClimaxSignal climax = ClusterAnalyzer.AnalyzeClimax(c1, c2, c3);
       if(climax != ClusterAnalyzer.ClimaxSignal.None)
+      {
         vmgr.MsgQueue.Enqueue(new Message(ClusterAnalyzer.FormatClimaxMessage(climax, c1, c2, c3)));
+        SoundAlert.PlayClimax();
+      }
+
+      ClusterAnalyzer.RejectionSignal rejection = ClusterAnalyzer.AnalyzeRejection(c1, c2, c3);
+      if(rejection != ClusterAnalyzer.RejectionSignal.None)
+      {
+        vmgr.MsgQueue.Enqueue(new Message(ClusterAnalyzer.FormatRejectionMessage(rejection, c1, c2, c3)));
+        SoundAlert.PlayRejection();
+      }
     }
 
     // **********************************************************************

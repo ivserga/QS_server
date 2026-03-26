@@ -1,4 +1,4 @@
-﻿// ==========================================================================
+// ==========================================================================
 //    TabClusters.cs (c) 2012 Nikolay Moroshkin, http://www.moroshkin.com/
 // ==========================================================================
 
@@ -53,6 +53,11 @@ namespace QScalp.Windows
       clusterFillVolume2.ValueChanged += new EventHandler(clusterFillVolume2_ValueChanged);
 
       clusterLegend.SelectionChanged += new SelectionChangedEventHandler(clusterLegend_SelectionChanged);
+
+      clusterSoundAlerts.IsChecked = cfg.u.ClusterSoundAlerts;
+      clusterAlertAbsorption.IsChecked = cfg.u.ClusterAlertAbsorption;
+      clusterAlertClimax.IsChecked = cfg.u.ClusterAlertClimax;
+      clusterAlertRejection.IsChecked = cfg.u.ClusterAlertRejection;
     }
 
     // **********************************************************************
@@ -174,6 +179,11 @@ namespace QScalp.Windows
       cfg.u.ClusterFillVolume1 = (int)clusterFillVolume1.Value;
       cfg.u.ClusterFillVolume2 = (int)clusterFillVolume2.Value;
       cfg.u.ClusterOpacityDelta = (int)clusterOpacityDelta.Value;
+
+      cfg.u.ClusterSoundAlerts = clusterSoundAlerts.IsChecked == true;
+      cfg.u.ClusterAlertAbsorption = clusterAlertAbsorption.IsChecked == true;
+      cfg.u.ClusterAlertClimax = clusterAlertClimax.IsChecked == true;
+      cfg.u.ClusterAlertRejection = clusterAlertRejection.IsChecked == true;
     }
 
     // **********************************************************************

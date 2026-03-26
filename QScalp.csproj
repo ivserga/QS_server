@@ -106,6 +106,8 @@
     <Compile Include="Connector\DataProvider\WebSocket\WebSocketClient.cs" />
     <Compile Include="Connector\DataProvider\WebSocket\WebSocketDataProvider.cs" />
     <Compile Include="Connector\DataProvider\WebSocket\WebSocketModels.cs" />
+    <Compile Include="Connector\ServerConnection\ServerConnectionClient.cs" />
+    <Compile Include="Connector\ServerConnection\ServerDataProvider.cs" />
     <Compile Include="Connector\TermManager\Emulator.cs" />
     <Compile Include="Connector\TermManager\Position.cs" />
     <Compile Include="Connector\TermManager\StopOrders.cs" />
@@ -191,6 +193,7 @@
     <Compile Include="View\Clusters\CCell.cs" />
     <Compile Include="View\Clusters\Legend.cs" />
     <Compile Include="View\Clusters\ClusterAnalyzer.cs" />
+    <Compile Include="View\Clusters\SoundAlert.cs" />
     <Compile Include="View\Clusters\ClustersElement.cs" />
     <Compile Include="View\Graph\TradeBall.cs" />
     <Compile Include="View\Graph\GraphElement.cs" />
