@@ -8,6 +8,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 
 using QScalp.View.ClustersSpace;
+using QScalp.View.ClustersSpace.Analytics;
+using QScalp.View.ClustersSpace.Analytics.Detectors;
+using QScalp.View.ClustersSpace.Analytics.Sinks;
 
 namespace QScalp.View
 {
@@ -24,6 +27,21 @@ namespace QScalp.View
 
     int nClusters;
     int displayClusters;
+
+    // Детекторы паттернов распределения объёма (absorption / climax / V-reversal)
+    SignalBus signalBus;
+    AbsorptionDetector absorptionDet;
+    ClimaxDetector climaxDet;
+    BalanceAfterClimaxDetector balanceDet;
+    VReversalDetector vReversalDet;
+    PocMigrationDetector pocMigrationDet;
+    HvnRejectDetector hvnRejectDet;
+    DistributionDetector distributionDet;
+    AccumulationDetector accumulationDet;
+    BreakoutDetector breakoutDet;
+    DoubleTopDetector doubleTopDet;
+    DoubleBottomDetector doubleBottomDet;
+    OrphanCloseDetector orphanCloseDet;
 
     // Горизонтальный скроллинг
     double hScrollOffset;
@@ -65,9 +83,194 @@ namespace QScalp.View
       children.Add(clusters = new ContainerVisual());
       children.Add(legends = new ContainerVisual());
 
+      BuildSignalBus();
+
       Rebuild();
     }
 
+    // **********************************************************************
+
+    /// <summary>
+    /// Поднимает конвейер анализа распределения объёма: историю кластеров,
+    /// набор детекторов и приёмники сигналов (Messenger + CSV-лог).
+    /// Параметры детекторов берутся из cfg.u.*, так что их можно менять без
+    /// перекомпиляции.
+    /// </summary>
+    void BuildSignalBus()
+    {
+      signalBus = new SignalBus(cfg.u.SignalsHistoryCapacity);
+
+      absorptionDet = new AbsorptionDetector
+      {
+        Enabled          = cfg.u.AbsorptionEnabled,
+        MinPocShare      = cfg.u.AbsorptionMinPocShare,
+        EdgeThreshold    = cfg.u.AbsorptionEdgeThreshold,
+        TailMaxShare     = cfg.u.AbsorptionTailMaxShare,
+        VolumeMultiplier = cfg.u.AbsorptionVolumeMultiplier,
+        AverageWindow    = cfg.u.AbsorptionAverageWindow
+      };
+
+      climaxDet = new ClimaxDetector
+      {
+        Enabled              = cfg.u.ClimaxEnabled,
+        MinTop3Share         = cfg.u.ClimaxMinTop3Share,
+        VolumeMultiplier     = cfg.u.ClimaxVolumeMultiplier,
+        MinDensityMultiplier = cfg.u.ClimaxMinDensityMultiplier,
+        EdgePosPocTop        = cfg.u.ClimaxEdgePosPocTop,
+        EdgePosPocBottom     = cfg.u.ClimaxEdgePosPocBottom,
+        AverageWindow        = cfg.u.ClimaxAverageWindow,
+        CooldownBars         = cfg.u.ClimaxCooldownBars
+      };
+
+      balanceDet = new BalanceAfterClimaxDetector
+      {
+        Enabled            = cfg.u.BalanceEnabled,
+        BalanceVolumeShare = cfg.u.BalanceVolumeShare,
+        BalanceRangeShare  = cfg.u.BalanceRangeShare,
+        MaxDeltaShare      = cfg.u.BalanceMaxDeltaShare,
+        ClimaxMinTop3Share = cfg.u.BalanceClimaxMinTop3Share,
+        ClimaxDensityMult  = cfg.u.BalanceClimaxDensityMult,
+        AverageWindow      = cfg.u.BalanceAverageWindow
+      };
+
+      vReversalDet = new VReversalDetector
+      {
+        Enabled                  = cfg.u.VReversalEnabled,
+        MinRun                   = cfg.u.VReversalMinRun,
+        AbsorptionEdge           = cfg.u.VReversalAbsorptionEdge,
+        AbsorptionPocShare       = cfg.u.VReversalAbsorptionPocShare,
+        MinBodyRatio             = cfg.u.VReversalMinBodyRatio,
+        MinCenterOfMassShift     = cfg.u.VReversalMinCenterOfMassShift
+      };
+
+      pocMigrationDet = new PocMigrationDetector
+      {
+        Enabled                  = cfg.u.PocMigrationEnabled,
+        MinShiftTicks            = cfg.u.PocMigrationMinShiftTicks,
+        VolumeMinRatio           = cfg.u.PocMigrationVolumeMinRatio,
+        AverageWindow            = cfg.u.PocMigrationAverageWindow,
+        CooldownBars             = cfg.u.PocMigrationCooldownBars,
+        SmoothConfirmRatio       = cfg.u.PocMigrationSmoothConfirmRatio,
+        MinDirectionalConfirm    = cfg.u.PocMigrationMinDirectionalConfirm,
+        CloseRelativePocTolTicks = cfg.u.PocMigrationCloseRelativePocTolTicks
+      };
+
+      hvnRejectDet = new HvnRejectDetector
+      {
+        Enabled          = cfg.u.HvnRejectEnabled,
+        LookbackBars     = cfg.u.HvnRejectLookbackBars,
+        MinHvnShare      = cfg.u.HvnRejectMinHvnShare,
+        MinReclaimTicks  = cfg.u.HvnRejectMinReclaimTicks,
+        MaxTailShare     = cfg.u.HvnRejectMaxTailShare,
+        CooldownBars     = cfg.u.HvnRejectCooldownBars
+      };
+
+      distributionDet = new DistributionDetector
+      {
+        Enabled              = cfg.u.DistributionEnabled,
+        Lookback             = cfg.u.DistributionLookback,
+        MinSwingDiffTicks    = cfg.u.DistributionMinSwingDiffTicks,
+        MaxVolumeSlope       = cfg.u.DistributionMaxVolumeSlope,
+        MinHighAgeBars       = cfg.u.DistributionMinHighAgeBars,
+        UseClusterUplift     = cfg.u.DistributionUseClusterUplift,
+        PosPocLowThreshold   = cfg.u.DistributionPosPocLowThreshold,
+        MinShareLowPosPoc    = cfg.u.DistributionMinShareLowPosPoc,
+        MinStrength          = cfg.u.DistributionMinStrength,
+        CooldownBars         = cfg.u.DistributionCooldownBars
+      };
+
+      accumulationDet = new AccumulationDetector
+      {
+        Enabled              = cfg.u.AccumulationEnabled,
+        Lookback             = cfg.u.AccumulationLookback,
+        MinSwingDiffTicks    = cfg.u.AccumulationMinSwingDiffTicks,
+        MinVolumeSlope       = cfg.u.AccumulationMinVolumeSlope,
+        MinLowAgeBars        = cfg.u.AccumulationMinLowAgeBars,
+        UseClusterUplift     = cfg.u.AccumulationUseClusterUplift,
+        PosPocHighThreshold  = cfg.u.AccumulationPosPocHighThreshold,
+        MinShareHighPosPoc   = cfg.u.AccumulationMinShareHighPosPoc,
+        MinStrength          = cfg.u.AccumulationMinStrength,
+        CooldownBars         = cfg.u.AccumulationCooldownBars
+      };
+
+      breakoutDet = new BreakoutDetector
+      {
+        Enabled            = cfg.u.BreakoutEnabled,
+        LookbackBars       = cfg.u.BreakoutLookbackBars,
+        MinBreakoutTicks   = cfg.u.BreakoutMinBreakoutTicks,
+        MinBodyRatio       = cfg.u.BreakoutMinBodyRatio,
+        MinVolumeRatio     = cfg.u.BreakoutMinVolumeRatio,
+        UseClusterUplift   = cfg.u.BreakoutUseClusterUplift,
+        PosPocFavorable    = cfg.u.BreakoutPosPocFavorable,
+        MaxTop3Share       = cfg.u.BreakoutMaxTop3Share,
+        MinStrength        = cfg.u.BreakoutMinStrength,
+        CooldownBars       = cfg.u.BreakoutCooldownBars
+      };
+
+      doubleTopDet = new DoubleTopDetector
+      {
+        Enabled              = cfg.u.DoubleTopEnabled,
+        Lookback             = cfg.u.DoubleTopLookback,
+        PeakLeftRight        = cfg.u.DoubleTopPeakLeftRight,
+        MaxPeakDiffTicks     = cfg.u.DoubleTopMaxPeakDiffTicks,
+        MinBarsBetweenPeaks  = cfg.u.DoubleTopMinBarsBetweenPeaks,
+        MinCorrectionTicks   = cfg.u.DoubleTopMinCorrectionTicks,
+        MinSecondPeakAgeBars = cfg.u.DoubleTopMinSecondPeakAgeBars,
+        MaxSecondPeakAgeBars = cfg.u.DoubleTopMaxSecondPeakAgeBars,
+        MinPostPeakDropTicks = cfg.u.DoubleTopMinPostPeakDropTicks,
+        UseClusterUplift     = cfg.u.DoubleTopUseClusterUplift,
+        MaxVolumeRatio       = cfg.u.DoubleTopMaxVolumeRatio,
+        PocCenterTolTicks    = cfg.u.DoubleTopPocCenterTolTicks,
+        MinStrength          = cfg.u.DoubleTopMinStrength,
+        CooldownBars         = cfg.u.DoubleTopCooldownBars
+      };
+
+      doubleBottomDet = new DoubleBottomDetector
+      {
+        Enabled                = cfg.u.DoubleBottomEnabled,
+        Lookback               = cfg.u.DoubleBottomLookback,
+        TroughLeftRight        = cfg.u.DoubleBottomTroughLeftRight,
+        MaxTroughDiffTicks     = cfg.u.DoubleBottomMaxTroughDiffTicks,
+        MinBarsBetweenTroughs  = cfg.u.DoubleBottomMinBarsBetweenTroughs,
+        MinReboundTicks        = cfg.u.DoubleBottomMinReboundTicks,
+        MinSecondTroughAgeBars = cfg.u.DoubleBottomMinSecondTroughAgeBars,
+        MaxSecondTroughAgeBars = cfg.u.DoubleBottomMaxSecondTroughAgeBars,
+        MinPostTroughRiseTicks = cfg.u.DoubleBottomMinPostTroughRiseTicks,
+        UseClusterUplift       = cfg.u.DoubleBottomUseClusterUplift,
+        MaxVolumeRatio         = cfg.u.DoubleBottomMaxVolumeRatio,
+        PocCenterTolTicks      = cfg.u.DoubleBottomPocCenterTolTicks,
+        MinStrength            = cfg.u.DoubleBottomMinStrength,
+        CooldownBars           = cfg.u.DoubleBottomCooldownBars
+      };
+
+      orphanCloseDet = new OrphanCloseDetector
+      {
+        Enabled        = cfg.u.OrphanCloseEnabled,
+        MinRangeTicks  = cfg.u.OrphanCloseMinRangeTicks,
+        MinGapShare    = cfg.u.OrphanCloseMinGapShare,
+        AverageWindow  = cfg.u.OrphanCloseAverageWindow,
+        MinVolumeRatio = cfg.u.OrphanCloseMinVolumeRatio,
+        MinStrength    = cfg.u.OrphanCloseMinStrength,
+        CooldownBars   = cfg.u.OrphanCloseCooldownBars
+      };
+
+      signalBus
+        .AddDetector(absorptionDet)
+        .AddDetector(climaxDet)
+        .AddDetector(balanceDet)
+        .AddDetector(vReversalDet)
+        .AddDetector(pocMigrationDet)
+        .AddDetector(hvnRejectDet)
+        .AddDetector(distributionDet)
+        .AddDetector(accumulationDet)
+        .AddDetector(breakoutDet)
+        .AddDetector(doubleTopDet)
+        .AddDetector(doubleBottomDet)
+        .AddSink(new MessengerSink(vmgr));
+
+      if(cfg.u.SignalsLogToCsv)
+        signalBus.AddSink(new SignalLogSink(cfg.SignalsLogFile));
+    }
 
     // **********************************************************************
 
@@ -180,6 +383,10 @@ namespace QScalp.View
       cCluster = new Cluster(vmgr, DateTime.MaxValue);
       cLegend = new Legend(vmgr, cCluster);
 
+      // Сбрасываем историю сигналов вместе с графиком.
+      if(signalBus != null)
+        signalBus.Reset(cfg.u.SignalsHistoryCapacity);
+
       // Сбрасываем горизонтальный скроллинг
       hScrollOffset = 0;
       UpdateOffset();
@@ -243,6 +450,29 @@ namespace QScalp.View
     void AnalyzeLastClusters()
     {
       int count = clusters.Children.Count;
+
+      // Только что закрылся кластер, идущий ПЕРЕД только что созданным пустым.
+      // Он лежит по индексу count - 2. Передаём его в детекторы распределения
+      // объёма (absorption / climax / balance / V-reversal).
+      //
+      // Обёрнуто в try/catch: аналитика ни при каких обстоятельствах не должна
+      // ронять основной конвейер отрисовки. Любая ошибка тут приведёт к потере
+      // входного трейда в PutTrade и визуальным "разрывам" в кластерах.
+      if(count >= 2 && cfg.u.SignalsEnabled && signalBus != null)
+      {
+        var closed = (Cluster)clusters.Children[count - 2];
+        try
+        {
+          signalBus.OnClusterClosed(closed, cfg.u.PriceStep);
+        }
+        catch(Exception ex)
+        {
+          vmgr.MsgQueue.Enqueue(new Message("Аналитика сигналов отключена из-за ошибки: " + ex.Message));
+          // Сбрасываем конвейер целиком, чтобы одна ошибка не повторялась каждый кластер.
+          signalBus = null;
+        }
+      }
+
       if(count < 4)
         return;
 

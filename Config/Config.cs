@@ -79,6 +79,7 @@ namespace QScalp
     public static readonly string WsDebugLogFile;
     public static readonly string SecFile;
     public static readonly string TradeLogFile;
+    public static readonly string SignalsLogFile;
 
 
     // **********************************************************************
@@ -105,6 +106,7 @@ namespace QScalp
       WsDebugLogFile = fs + "ws_debug.log";
       SecFile = fs + "seclist.csv";
       TradeLogFile = fs + "trades." + TradeLogFileExt;
+      SignalsLogFile = fs + "signals.csv";
 
       // ------------------------------------------------------------
 
