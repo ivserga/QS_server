@@ -602,7 +602,7 @@ namespace QScalp.Connector.WebSocket
                 RawPrice = tr.Price,
                 IntPrice = intPrice,
                 Quantity = (int)tr.Size,
-                Op = TradeOp.Buy,
+                Op = TradeSideResolver.Resolve(intPrice, bid, ask),
                 DateTime = DateTimeOffset
                     .FromUnixTimeMilliseconds(tr.SipTimestamp / 1_000_000)
                     .DateTime

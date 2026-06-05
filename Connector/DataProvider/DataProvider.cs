@@ -137,4 +137,21 @@ namespace QScalp.Connector
 
     // **********************************************************************
   }
+
+  static class TradeSideResolver
+  {
+    public static TradeOp Resolve(int intPrice, int bidPrice, int askPrice)
+    {
+      if(intPrice <= 0 || bidPrice <= 0 || askPrice <= 0 || askPrice < bidPrice)
+        return TradeOp.Wait;
+
+      if(intPrice >= askPrice)
+        return TradeOp.Buy;
+
+      if(intPrice <= bidPrice)
+        return TradeOp.Sell;
+
+      return TradeOp.Wait;
+    }
+  }
 }
