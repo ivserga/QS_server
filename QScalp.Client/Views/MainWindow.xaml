@@ -1,0 +1,184 @@
+<Window x:Class="QScalp.Client.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:QScalp.Client.ViewModels"
+        xmlns:v="clr-namespace:QScalp.Client.Views"
+        Title="QScalp.Client — анализатор кластеров"
+        Height="780" Width="1200"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:TickerVM}">
+            <!-- Левая цветная полоска состояния + содержимое.
+                 Полоска зелёная — анализ работает, серая — остановлен. -->
+            <Border Padding="0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="{Binding StatusAccentBrush}"/>
+
+                    <Grid Grid.Column="1" Margin="10,7,10,7">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Тикер + цветной бейдж статуса -->
+                        <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal">
+                            <TextBlock Text="{Binding Ticker}"
+                                       FontWeight="SemiBold" FontSize="14"
+                                       VerticalAlignment="Center"/>
+                            <Border Margin="8,0,0,0"
+                                    CornerRadius="8"
+                                    Padding="6,1"
+                                    Background="{Binding StatusBgBrush}"
+                                    BorderBrush="{Binding StatusAccentBrush}"
+                                    BorderThickness="1"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding StatusBadgeText}"
+                                           FontSize="10" FontWeight="Bold"
+                                           Foreground="{Binding StatusAccentBrush}"/>
+                            </Border>
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="0" Grid.Row="1"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   FontSize="11" Margin="0,2,0,0">
+                            <Run Text="сигналов: "/>
+                            <Run Text="{Binding SignalCount, Mode=OneWay}"
+                                 Foreground="{Binding SignalCountBrush}"
+                                 FontWeight="SemiBold"/>
+                            <Run Text="   баров: "/>
+                            <Run Text="{Binding ClusterCount, Mode=OneWay}"
+                                 Foreground="{StaticResource FgBrush}"/>
+                        </TextBlock>
+
+                        <TextBlock Grid.Column="1" Grid.RowSpan="2"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   FontFamily="Consolas"
+                                   FontSize="11"
+                                   Text="{Binding LastTradeText}"/>
+                    </Grid>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Top bar -->
+        <Border DockPanel.Dock="Top"
+                Background="{StaticResource BgSurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="12,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="QScalp.Client" FontWeight="Bold" FontSize="16" Margin="0,0,16,0"/>
+                    <TextBlock Text="WS:" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
+                    <TextBox Width="280" Margin="6,0,0,0"
+                             Text="{Binding ServerUrl, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Content="+ Тикер"
+                            Style="{StaticResource AccentButton}"
+                            Command="{Binding AddTickerCommand}" Margin="0,0,6,0"
+                            ToolTip="Добавить новый тикер для анализа"/>
+                    <Button Content="Удалить"
+                            Style="{StaticResource DangerButton}"
+                            Command="{Binding RemoveTickerCommand}" Margin="0,0,16,0"
+                            ToolTip="Удалить выбранный тикер"/>
+                    <Button Content="▶ Старт всех"
+                            Style="{StaticResource GhostSuccessButton}"
+                            Command="{Binding StartAllCommand}" Margin="0,0,6,0"/>
+                    <Button Content="■ Стоп всех"
+                            Style="{StaticResource GhostDangerButton}"
+                            Command="{Binding StopAllCommand}" Margin="0,0,16,0"/>
+                    <Button Content="💾 Сохранить"
+                            Style="{StaticResource AccentButton}"
+                            Command="{Binding SaveCommand}"
+                            ToolTip="Сохранить настройки в client.json"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main content -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: ticker list -->
+            <DockPanel Grid.Column="0">
+                <Border DockPanel.Dock="Top"
+                        Background="{StaticResource BgSurfaceBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="12,6">
+                    <TextBlock Text="Тикеры"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource MutedBrush}"/>
+                </Border>
+
+                <ListBox ItemsSource="{Binding Tickers}"
+                         SelectedItem="{Binding Selected}"
+                         BorderThickness="0">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="Bd"
+                                                Background="{TemplateBinding Background}"
+                                                Padding="0"
+                                                SnapsToDevicePixels="True">
+                                            <ContentPresenter HorizontalAlignment="Stretch"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverRowBrush}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SelectedRowBrush}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
+            </DockPanel>
+
+            <GridSplitter Grid.Column="1" Width="2" Background="{StaticResource BorderBrush}"
+                          HorizontalAlignment="Stretch"/>
+
+            <!-- Right: detail of selected ticker -->
+            <ContentControl Grid.Column="2" Content="{Binding Selected}">
+                <ContentControl.ContentTemplate>
+                    <DataTemplate>
+                        <v:TickerDetailView/>
+                    </DataTemplate>
+                </ContentControl.ContentTemplate>
+            </ContentControl>
+        </Grid>
+    </DockPanel>
+</Window>

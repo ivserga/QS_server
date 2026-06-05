@@ -283,12 +283,14 @@ namespace QScalp.Connector.RestApi
 
         private void ProcessTrade(TradeResult tr)
         {
+            int intPrice = Price.GetInt(tr.Price);
+
             var trade = new Trade
             {
                 RawPrice = tr.Price,
-                IntPrice = Price.GetInt(tr.Price),
+                IntPrice = intPrice,
                 Quantity = (int)tr.Size,
-                Op = TradeOp.Buy,  // Направление не определяем
+                Op = TradeSideResolver.Resolve(intPrice, _tmgr.BidPrice, _tmgr.AskPrice),
                 DateTime = DateTimeOffset
                     .FromUnixTimeMilliseconds(tr.SipTimestamp / 1_000_000)
                     .DateTime

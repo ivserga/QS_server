@@ -433,6 +433,67 @@
                         </StackPanel>
                     </GroupBox>
 
+                    <GroupBox Header="Анализ кластеров (DeepSeek / OpenAI-compat.)">
+                        <StackPanel>
+                            <CheckBox Content="Включить потоковый AI-анализ закрытых кластеров"
+                                      Name="llmAnalysisEnabled" />
+                            <Grid Margin="0,4,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="API key" />
+                                <PasswordBox Grid.Column="1" Name="llmApiKey" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Base URL" />
+                                <TextBox  Grid.Column="1" Name="llmApiBaseUrl" />
+                                <Label Grid.Column="2" Content="Модель" />
+                                <TextBox  Grid.Column="3" Name="llmModel" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label   Grid.Column="0" Content="Интервал, сек" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="llmMinIntervalSeconds" MinValue="0" />
+                                <Label   Grid.Column="2" Content="Keep recent" />
+                                <uc:NumUpDown Grid.Column="3" x:Name="llmKeepRecentBars"    MinValue="2" />
+                                <Label   Grid.Column="4" Content="Max tokens" />
+                                <uc:NumUpDown Grid.Column="5" x:Name="llmMaxContextTokens"   MinValue="2000" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Label   Grid.Column="0" Content="Temperature" />
+                                <uc:NumUpDown Grid.Column="1" x:Name="llmTemperature" MinValue="0" />
+                                <Label   Grid.Column="2" Content="HTTP timeout, сек" />
+                                <uc:NumUpDown  Grid.Column="3" x:Name="llmHttpClientTimeoutSeconds" MinValue="10" />
+                            </Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox Content="Писать ответы в Messenger" Name="llmShowInMessenger" />
+                                <CheckBox Content="Доп. лог в llm_analysis.log" Name="llmLogToFile" Margin="16,0,0,0" />
+                            </StackPanel>
+                            <Button Content="Сбросить диалог AI (новая сессия)" Name="llmResetDialog"
+                                    Click="llmResetDialog_Click" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </GroupBox>
+
                     <GroupBox Header="Графическое представление">
                         <StackPanel>
                             <Grid>

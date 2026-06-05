@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>QScalp.Tools.ClusterReplay</RootNamespace>
+    <AssemblyName>ClusterReplay</AssemblyName>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\View\Clusters\ClusterPriceLevel.cs" Link="ViewPorts\ClusterPriceLevel.cs" />
+    <Compile Include="..\..\View\Clusters\ClusterAnalyzer.cs" Link="ViewPorts\ClusterAnalyzer.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\FalseBreakReclaimDetector.cs" Link="ViewPorts\FalseBreakReclaimDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\FalseBreakReclaimDownDetector.cs" Link="ViewPorts\FalseBreakReclaimDownDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\TrendContinuationDetector.cs" Link="ViewPorts\TrendContinuationDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\FlushDetector.cs" Link="ViewPorts\FlushDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\WindowMath.cs" Link="ViewPorts\WindowMath.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\ISignalDetector.cs" Link="ViewPorts\ISignalDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Signal.cs" Link="ViewPorts\Signal.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\ClusterHistory.cs" Link="ViewPorts\ClusterHistory.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\ClusterStats.cs" Link="ViewPorts\ClusterStats.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\SignalBus.cs" Link="ViewPorts\SignalBus.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\AbsorptionDetector.cs" Link="ViewPorts\AbsorptionDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\ClimaxDetector.cs" Link="ViewPorts\ClimaxDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\BalanceAfterClimaxDetector.cs" Link="ViewPorts\BalanceAfterClimaxDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\VReversalDetector.cs" Link="ViewPorts\VReversalDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\HvnRejectDetector.cs" Link="ViewPorts\HvnRejectDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\DistributionDetector.cs" Link="ViewPorts\DistributionDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\AccumulationDetector.cs" Link="ViewPorts\AccumulationDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\BreakoutDetector.cs" Link="ViewPorts\BreakoutDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\DoubleTopDetector.cs" Link="ViewPorts\DoubleTopDetector.cs" />
+    <Compile Include="..\..\View\Clusters\Analytics\Detectors\DoubleBottomDetector.cs" Link="ViewPorts\DoubleBottomDetector.cs" />
+  </ItemGroup>
+</Project>

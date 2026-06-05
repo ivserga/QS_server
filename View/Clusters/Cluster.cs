@@ -71,15 +71,19 @@ namespace QScalp.View.ClustersSpace
 
       // ------------------------------------------------------------
 
-      if(trade.Op == TradeOp.Sell)
+      if(trade.Op == TradeOp.Buy)
+      {
+        cell.AddBuy(trade.Quantity);
+        Delta += trade.Quantity;
+      }
+      else if(trade.Op == TradeOp.Sell)
       {
         cell.AddSell(trade.Quantity);
         Delta -= trade.Quantity;
       }
       else
       {
-        cell.AddBuy(trade.Quantity);
-        Delta += trade.Quantity;
+        cell.AddNeutral(trade.Quantity);
       }
 
       Volume += trade.Quantity;
@@ -156,7 +160,8 @@ namespace QScalp.View.ClustersSpace
 
       foreach(KeyValuePair<int, CCell> kvp in cells)
       {
-        long cellVol = kvp.Value.BuyVolume + kvp.Value.SellVolume;
+        long cellVol = kvp.Value.BuyVolume + kvp.Value.SellVolume
+          + kvp.Value.NeutralVolume;
 
         if(kvp.Key > refPrice)
           volumeAbove += cellVol;
@@ -171,8 +176,30 @@ namespace QScalp.View.ClustersSpace
     {
       CCell cell;
       if(cells.TryGetValue(price, out cell))
-        return cell.BuyVolume + cell.SellVolume;
+        return cell.BuyVolume + cell.SellVolume + cell.NeutralVolume;
       return 0;
+    }
+
+    // **********************************************************************
+
+    public IList<ClusterPriceLevel> GetPriceLevels()
+    {
+      List<int> prices = new List<int>(cells.Keys);
+      prices.Sort();
+      prices.Reverse();
+
+      List<ClusterPriceLevel> levels = new List<ClusterPriceLevel>(prices.Count);
+      foreach(int price in prices)
+      {
+        CCell cell = cells[price];
+        levels.Add(new ClusterPriceLevel(
+          price,
+          cell.SellVolume,
+          cell.BuyVolume,
+          cell.NeutralVolume));
+      }
+
+      return levels;
     }
 
     // **********************************************************************

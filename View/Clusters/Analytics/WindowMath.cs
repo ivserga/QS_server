@@ -154,12 +154,8 @@ namespace QScalp.View.ClustersSpace.Analytics
 
     // **********************************************************************
 
-    /// <summary>
-    /// Доля баров окна, у которых PosPoc &lt; threshold.
-    /// Используется для оценки «сколько баров с POC у нижней части бара» —
-    /// классический признак distribution.
-    /// </summary>
-    public static double SharePosPocBelow(ClusterHistory history, int count, double threshold)
+    /// <summary>Доля баров окна, у которых PosCom &lt; threshold (distribution).</summary>
+    public static double SharePosComBelow(ClusterHistory history, int count, double threshold)
     {
       int below = 0, total = 0;
       for(int i = 0; i < count; i++)
@@ -167,13 +163,13 @@ namespace QScalp.View.ClustersSpace.Analytics
         var s = history.Last(i);
         if(s == null) break;
         total++;
-        if(s.PosPoc < threshold) below++;
+        if(s.PosCom < threshold) below++;
       }
       return total > 0 ? (double)below / total : 0;
     }
 
-    /// <summary>Доля баров с PosPoc &gt; threshold (зеркальный признак для accumulation).</summary>
-    public static double SharePosPocAbove(ClusterHistory history, int count, double threshold)
+    /// <summary>Доля баров с PosCom &gt; threshold (accumulation).</summary>
+    public static double SharePosComAbove(ClusterHistory history, int count, double threshold)
     {
       int above = 0, total = 0;
       for(int i = 0; i < count; i++)
@@ -181,7 +177,7 @@ namespace QScalp.View.ClustersSpace.Analytics
         var s = history.Last(i);
         if(s == null) break;
         total++;
-        if(s.PosPoc > threshold) above++;
+        if(s.PosCom > threshold) above++;
       }
       return total > 0 ? (double)above / total : 0;
     }
@@ -332,22 +328,13 @@ namespace QScalp.View.ClustersSpace.Analytics
     // **********************************************************************
 
     /// <summary>
-    /// Сглаженный «центр объёма» одного бара. Усредняет три точки:
-    ///   • PocPrice (дискретный максимум — может прыгать на 1 тик при близких
-    ///     объёмах двух соседних уровней),
-    ///   • CenterOfMass (взвешенный VWAP всего профиля — гладкий, но «тянет»
-    ///     к хвостам распределения),
-    ///   • середина Top3-окна (точка наибольшей концентрации трёх соседних
-    ///     уровней — устойчива даже когда POC «дрожит»).
-    /// Возвращает цену в тех же единицах, что и PocPrice.
-    /// Используется детекторами вместо чистого PocPrice, когда сравнение
-    /// чувствительно к шагу priceStep (PocMigration, DoubleTop, DoubleBottom).
+    /// Сглаженный центр объёма: (CenterOfMass + середина Top3) / 2.
     /// </summary>
-    public static double PocCenter(ClusterStats s)
+    public static double VolumeCenter(ClusterStats s)
     {
       if(s == null) return 0;
       double top3Mid = (s.Top3From + s.Top3To) * 0.5;
-      return (s.PocPrice + s.CenterOfMass + top3Mid) / 3.0;
+      return (s.CenterOfMass + top3Mid) * 0.5;
     }
 
     // **********************************************************************

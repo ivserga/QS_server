@@ -58,6 +58,32 @@ namespace QScalp.Windows
       clusterAlertAbsorption.IsChecked = cfg.u.ClusterAlertAbsorption;
       clusterAlertClimax.IsChecked = cfg.u.ClusterAlertClimax;
       clusterAlertRejection.IsChecked = cfg.u.ClusterAlertRejection;
+
+      // ---- LLM / DeepSeek ----
+      llmAnalysisEnabled.IsChecked = cfg.u.LlmAnalysisEnabled;
+      llmApiKey.Password = cfg.u.LlmApiKey ?? "";
+      llmApiBaseUrl.Text = cfg.u.LlmApiBaseUrl;
+      llmModel.Text = cfg.u.LlmModel;
+
+      llmMinIntervalSeconds.Value = cfg.u.LlmMinIntervalSeconds;
+      llmKeepRecentBars.Value = cfg.u.LlmKeepRecentBars;
+      llmMaxContextTokens.Value = cfg.u.LlmMaxContextTokens;
+
+      llmTemperature.Value = cfg.u.LlmTemperature;
+      llmHttpClientTimeoutSeconds.Value = cfg.u.LlmHttpClientTimeoutSeconds;
+
+      llmShowInMessenger.IsChecked = cfg.u.LlmShowInMessenger;
+      llmLogToFile.IsChecked = cfg.u.LlmLogToFile;
+    }
+
+    // **********************************************************************
+
+    void llmResetDialog_Click(object sender, RoutedEventArgs e)
+    {
+      // Маркер: при Apply ClustersElement сам подхватит через сравнение
+      // SavedSettings и вызовет clusterLlmSession.Reset(). Здесь просто
+      // включаем кнопку Apply.
+      EnableApplyButton(sender, e);
     }
 
     // **********************************************************************
@@ -184,6 +210,25 @@ namespace QScalp.Windows
       cfg.u.ClusterAlertAbsorption = clusterAlertAbsorption.IsChecked == true;
       cfg.u.ClusterAlertClimax = clusterAlertClimax.IsChecked == true;
       cfg.u.ClusterAlertRejection = clusterAlertRejection.IsChecked == true;
+
+      // ---- LLM / DeepSeek ----
+      cfg.u.LlmAnalysisEnabled = llmAnalysisEnabled.IsChecked == true;
+      cfg.u.LlmApiKey = llmApiKey.Password ?? "";
+      cfg.u.LlmApiBaseUrl = (llmApiBaseUrl.Text ?? "").Trim();
+      if(string.IsNullOrEmpty(cfg.u.LlmApiBaseUrl))
+        cfg.u.LlmApiBaseUrl = "https://api.deepseek.com";
+      cfg.u.LlmModel = (llmModel.Text ?? "").Trim();
+      if(string.IsNullOrEmpty(cfg.u.LlmModel))
+        cfg.u.LlmModel = "deepseek-chat";
+
+      cfg.u.LlmMinIntervalSeconds = (int)llmMinIntervalSeconds.Value;
+      cfg.u.LlmKeepRecentBars = (int)llmKeepRecentBars.Value;
+      cfg.u.LlmMaxContextTokens = (int)llmMaxContextTokens.Value;
+      cfg.u.LlmTemperature = llmTemperature.Value;
+      cfg.u.LlmHttpClientTimeoutSeconds = (int)llmHttpClientTimeoutSeconds.Value;
+
+      cfg.u.LlmShowInMessenger = llmShowInMessenger.IsChecked == true;
+      cfg.u.LlmLogToFile = llmLogToFile.IsChecked == true;
     }
 
     // **********************************************************************

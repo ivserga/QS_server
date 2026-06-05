@@ -147,11 +147,14 @@ namespace QScalp.Server.Broadcasting
                         break;
 
                     case ClientCommandType.RequestSnapshot:
-                        if (!string.IsNullOrEmpty(client.CurrentTicker))
-                        {
-                            await _subscriptionManager.SubscribeClientAsync(
-                                client, client.CurrentTicker, cmd.SecKey ?? client.CurrentTicker);
-                        }
+                        // НЕ пересоздаём подписку (это бы дёрнуло REST повторно)
+                        // — просто шлём то, что уже накоплено в буфере, с
+                        // опциональной REST-дозагрузкой согласно ServerConfig.
+                        await _subscriptionManager.SendSnapshotOnDemandAsync(client);
+                        break;
+
+                    case ClientCommandType.FillTradeTicket:
+                        await _subscriptionManager.FillTradeTicketAsync(client, cmd);
                         break;
                 }
             }

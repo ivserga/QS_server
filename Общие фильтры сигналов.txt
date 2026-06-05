@@ -1,0 +1,218 @@
+Общие фильтры сигналов
+В секции Антиспам сигналов:
+
+MinSignalIntervalSeconds — минимальная пауза в секундах между одинаковыми сигналами одного типа.
+MinBarsBetweenRepeatedSignals — сколько закрытых кластеров должно пройти перед повтором того же сигнала.
+MaxSignalsPerCluster — максимум сигналов, которые можно выпустить на одном закрытом кластере.
+MinSignalStrength — общий фильтр силы сигнала. 0 = не фильтровать.
+Современные детекторы
+
+Absorption
+Ищет абсорбцию на верхней/нижней границе кластера.
+
+MinTop3Share — минимальная доля объёма в Top3. Больше = сигнал строже.
+EdgeThreshold — насколько близко COM должен быть к краю диапазона. 0.85 = верхние 15% или нижние 15%.
+TailMaxShare — максимум объёма «за COM». Чем меньше, тем чище абсорбция.
+VolumeMultiplier — объём текущего кластера должен быть больше среднего в это число раз.
+AverageWindow — сколько предыдущих кластеров брать для среднего объёма.
+
+Climax
+Ищет объёмный климакс покупок/продаж.
+
+MinTop3Share — минимальная доля объёма в трёх самых нагруженных ценовых уровнях.
+VolumeMultiplier — объём текущего кластера относительно среднего.
+MinDensityMultiplier — плотность объёма на диапазон должна быть выше средней.
+EdgePosComTop — COM выше этого уровня считается верхним климаксом.
+EdgePosComBottom — COM ниже этого уровня считается нижним климаксом.
+AverageWindow — окно среднего объёма/диапазона.
+CooldownBars — пауза в кластерах после сигнала.
+
+BalanceAfterClimax
+Ищет «затухание» после климакса.
+
+BalanceVolumeShare — объём текущего кластера должен быть не больше этой доли от предыдущего климакс-кластера.
+BalanceRangeShare — диапазон текущего кластера должен быть не больше этой доли от предыдущего.
+MaxDeltaShare — максимальная допустимая доля абсолютной дельты от объёма.
+ClimaxMinTop3Share — насколько концентрированным должен быть предыдущий кластер, чтобы считаться климаксом.
+ClimaxDensityMult — плотность предыдущего кластера относительно средней.
+AverageWindow — окно для средней плотности.
+
+VReversal
+Ищет V-разворот после направленного движения и абсорбции.
+
+MinRun — минимум подряд идущих медвежьих/бычьих кластеров перед разворотом.
+AbsorptionEdge — насколько близко COM предыдущего кластера должен быть к краю.
+AbsorptionTop3Share — минимальная доля Top3 у предыдущего кластера.
+MinBodyRatio — минимальный размер тела разворотного кластера относительно его диапазона.
+MinCenterOfMassShift — минимальный сдвиг центра объёма в сторону разворота.
+
+HvnReject
+Ищет отскок от HVN — уровня с максимальным объёмом за окно.
+
+LookbackBars — сколько прошлых кластеров участвует в построении HVN.
+MinHvnShare — минимальная доля объёма HVN в общем объёме окна.
+MinReclaimTicks — на сколько цена должна вернуться от HVN после прокола.
+MaxTailShare — максимум объёма за HVN после прокола.
+CooldownBars — пауза между сигналами.
+
+Distribution
+Ищет распределение у вершины.
+
+Lookback — окно анализа структуры.
+MinSwingDiffTicks — минимальная разница между двумя половинами окна: lower highs.
+MaxVolumeSlope — максимум наклона объёма. Отрицательное значение требует снижения объёма.
+MinHighAgeBars — high должен быть не слишком свежим.
+UseClusterUplift — учитывать дополнительные кластерные признаки.
+PosComLowThreshold — порог, ниже которого COM считается «низким».
+MinShareLowPosCom — какая доля кластеров должна иметь COM внизу.
+MinStrength — минимальная сила сигнала.
+CooldownBars — пауза после сигнала.
+
+Accumulation
+Зеркало Distribution для накопления у дна.
+
+Lookback — окно анализа.
+MinSwingDiffTicks — минимальная разница для higher lows.
+MinVolumeSlope — минимальный наклон объёма. Больше = строже.
+MinLowAgeBars — low должен быть не слишком свежим.
+UseClusterUplift — учитывать дополнительные кластерные признаки.
+PosComHighThreshold — порог, выше которого COM считается «высоким».
+MinShareHighPosCom — доля кластеров с COM вверху.
+MinStrength — минимальная сила сигнала.
+CooldownBars — пауза после сигнала.
+
+Breakout
+Ищет чистый пробой диапазона.
+
+LookbackBars — окно поиска предыдущего high/low.
+MinBreakoutTicks — минимальная глубина пробоя.
+MinBodyRatio — тело пробойного кластера относительно диапазона.
+MinVolumeRatio — объём относительно среднего.
+UseClusterUplift — учитывать COM/top3/skew/shape.
+PosComFavorable — COM должен быть в благоприятной зоне для направления.
+MaxTop3Share — максимум концентрации в top-3 уровнях; слишком высокая концентрация штрафуется.
+MinStrength — минимальная сила.
+CooldownBars — пауза.
+
+DoubleTop
+Ищет двойную вершину.
+
+Lookback — окно поиска паттерна.
+PeakLeftRight — сколько баров слева/справа нужно для локального пика.
+MaxPeakDiffTicks — максимальная разница между двумя вершинами.
+MinBarsBetweenPeaks — минимальное расстояние между вершинами.
+MinCorrectionTicks — минимальная коррекция между вершинами.
+MinSecondPeakAgeBars — вторая вершина должна быть не совсем текущей.
+MaxSecondPeakAgeBars — вторая вершина не должна быть слишком старой.
+MinPostPeakDropTicks — цена должна уже отойти вниз от второй вершины.
+UseClusterUplift — учитывать объём/COM второй вершины.
+MaxVolumeRatio — объём второй вершины относительно первой.
+VolumeCenterTolTicks — допустимое смещение VolumeCenter.
+MinStrength — минимальная сила.
+CooldownBars — пауза.
+
+DoubleBottom
+Зеркало DoubleTop для двойного дна.
+
+Lookback — окно поиска.
+TroughLeftRight — сколько баров слева/справа нужно для локального дна.
+MaxTroughDiffTicks — максимальная разница между двумя минимумами.
+MinBarsBetweenTroughs — минимальное расстояние между минимумами.
+MinReboundTicks — минимальный отскок между двумя минимумами.
+MinSecondTroughAgeBars — второе дно должно быть не совсем текущим.
+MaxSecondTroughAgeBars — второе дно не должно быть слишком старым.
+MinPostTroughRiseTicks — цена должна уже отойти вверх от второго дна.
+UseClusterUplift — учитывать объём/COM второго дна.
+MaxVolumeRatio — объём второго дна относительно первого.
+VolumeCenterTolTicks — допустимое смещение VolumeCenter.
+MinStrength — минимальная сила.
+CooldownBars — пауза.
+
+FalseBreakReclaim (Up + Down)
+Up: ложный пробой вниз от prior high + reclaim выше (spring long) — FalseBreakReclaim*.
+Down: ложный пробой вверх от prior low + reclaim ниже (upthrust short) — FalseBreakReclaimDown* (зеркальные default, чуть жёстче Up).
+
+LookbackBars — окно поиска уровня.
+NearLevelTicks — допуск близости к уровню.
+MinNearTouches — минимум касаний уровня.
+FalseBreakMinTicks — глубина ложного выноса.
+FalseBreakVolumeRatio — объём trap-бара.
+MaxBarsAfterTrap — пауза между trap и reclaim.
+ReclaimBreakTicks — насколько close должен вернуться выше уровня.
+ReclaimVolumeRatio — объём reclaim-бара.
+ReclaimMinBodyRatio — тело reclaim-бара.
+ReclaimPosComMin — минимальный PosCom на reclaim-баре.
+ReclaimMaxTop3Share — максимум Top3Share на reclaim.
+MinStrength — минимальная сила.
+CooldownBars — пауза.
+
+TouchLiquidity (L1, Striker HTTP)
+Спайк / снятие объёма на best bid и best ask (то, что видно в стакане QScalp). Без L2.
+
+TouchLiquidityHistoryCapacity — длина кольцевого буфера снимков L1.
+TouchLiquidityMedianWindow — окно медианы для «нормального» размера на touch.
+TouchLiquidityMinTouchSize — минимальный абсолютный размер (отсев мелочи).
+TouchLiquiditySpikeMedianMult — спайк: size ≥ медиана × множитель.
+TouchLiquiditySpikeVsPriorMult — спайк: size ≥ prior × множитель (резкий рост).
+TouchLiquidityPullDropShare — снятие: падение size на эту долю от предыдущего снимка.
+TouchLiquidityMinPullDropSize — минимум абсолютного снятия лотов.
+TouchLiquidityMinStrength — минимальная сила для Messenger/лога.
+TouchLiquidityCooldownSamples — пауза в снимках L1 между однотипными сигналами.
+TouchLiquidityDetectAskSpike / BidSpike / AskPull / BidPull — какие события включены.
+TouchLiquidityLogToMessenger — false: «Стена»/«Сняли стену» не в ленту (touch только для fusion).
+TouchLiquidityCooldownSamples — пауза между однотипными touch-событиями (default 8).
+
+Fusion (кластер + touch L1)
+FusionAppendTouchNotesToMessenger — false: не дописывать [touch: …] к кластерным сигналам.
+Связывает сигналы по сделкам (Flush, Breakout, Absorption, TrendContinuation, legacy «Поглощение») с недавними touch-событиями.
+
+FusionEnabled — включить fusion.
+FusionLookbackSeconds — окно «недавних» touch-событий (сек).
+FusionStrengthBoost — при подтверждении touch усилить Strength кластерного сигнала.
+FusionAnnotateOnly — true: не отсекать, только дописывать [touch: …]; false: отсекать без подтверждения.
+FusionRequireTouchFlushDown — FlushDown только при TouchAskSpike / TouchBidPull или живом ask≥медиана.
+FusionRequireTouchBreakoutDown — BreakoutDown только при TouchBidPull / TouchAskSpike в окне.
+FusionRequireTouchFlushUp / BreakoutUp — то же для ап-сигналов.
+FusionSuppressAbsorptionBuyOnAskSpike — не показывать AbsorptionBuy / legacy «покупатели» при стене на ask.
+FusionSuppressAbsorptionSellOnBidSpike — не показывать AbsorptionSell / legacy «продавцы» при стене на bid.
+
+OrphanClose
+Ищет закрытие далеко от основной зоны объёма.
+
+MinRangeTicks — минимальный диапазон кластера.
+MinGapShare — насколько далеко close от COM относительно диапазона.
+AverageWindow — окно среднего объёма.
+MinVolumeRatio — минимальный объём относительно среднего.
+MinStrength — минимальная сила.
+CooldownBars — пауза.
+
+Legacy-детекторы
+LegacyAbsorption
+Старый 3-кластерный детектор поглощения.
+
+WPF (ClusterAnalyzer): cfg.u.LegacyAbsorptionVolumeRatioThreshold (по умолчанию 0.68),
+  cfg.u.LegacyAbsorptionVolumeMultiplier (по умолчанию 1.35).
+Client: ticker JSON legacyAbsorptionVolumeRatioThreshold / legacyAbsorptionVolumeMultiplier
+  или свойства детектора VolumeRatioThreshold / AbsorptionVolumeMultiplier.
+
+VolumeRatioThreshold — какая доля объёма должна быть выше/ниже reference price.
+AbsorptionVolumeMultiplier — объём третьего кластера должен быть больше предыдущих в это число раз.
+
+LegacyClimax
+Старый детектор объёмного выброса.
+
+VolumeClimaxMultiplier — насколько объём текущего кластера должен превышать два предыдущих.
+VolumeRatioThreshold — доля объёма выше/ниже close для подтверждения климакса.
+
+LegacyRejection
+Старый детектор отторжения уровня.
+
+RejectionCellRatioThreshold — минимальная доля объёма на extreme-цене кластера.
+RejectionMinTouches — минимум касаний уровня за последние 3 кластера.
+Как практически настраивать
+Для начала лучше крутить только 3 группы:
+
+Частота сигналов: CooldownBars, общие MinSignalIntervalSeconds, MinBarsBetweenRepeatedSignals.
+Строгость сигнала: MinStrength, MinSignalStrength, TradeTicketMinSignalStrength.
+Чувствительность к объёму: VolumeMultiplier, MinVolumeRatio, VolumeMinRatio.
+Если сигналов слишком много — повышайте MinStrength, CooldownBars, VolumeMultiplier. Если сигналов почти нет — снижайте MinStrength и объёмные множители.

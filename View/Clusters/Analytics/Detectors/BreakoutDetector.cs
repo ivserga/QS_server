@@ -4,8 +4,7 @@
 //
 //  Breakout — момент, когда цена закрывается ВЫШЕ максимума прошлых N
 //  закрытых баров (или НИЖЕ минимума) с подтверждающим объёмом и реальным
-//  телом свечи. В отличие от PocMigration (который ловит «продолжение тренда»
-//  по 3 POC подряд) и Climax (один экстремальный бар), Breakout — это именно
+//  телом свечи. В отличие от Climax (один экстремальный бар), Breakout — это именно
 //  смена диапазона: предыдущие N баров были ограничены сверху уровнем X,
 //  а текущий бар X пробил.
 //
@@ -17,7 +16,7 @@
 //    3. Volume ≥ avg_volume(LookbackBars) * MinVolumeRatio.
 //
 //  Cluster-uplift (если включён):
-//    + PosPoc у верхней (для up-пробоя) части бара ≥ PosPocFavorable:
+//    + PosPoc у верхней (для up-пробоя) части бара ≥ PosComFavorable:
 //      «POC ушёл вверх — реально торговали на пробое, не просто шип».
 //    + Top3Share НЕ выше MaxTop3Share: иначе это абсорбция (HFT мучает
 //      уровень), а не настоящий пробой.
@@ -61,7 +60,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
     public bool   UseClusterUplift    { get; set; }
 
     /// <summary>«Благоприятный» pos_poc — для пробоя вверх ≥, для пробоя вниз ≤ (1 - threshold).</summary>
-    public double PosPocFavorable     { get; set; }
+    public double PosComFavorable     { get; set; }
 
     /// <summary>Если top3_share выше — это абсорбция / уплотнение, а не пробой.</summary>
     public double MaxTop3Share        { get; set; }
@@ -84,7 +83,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       MinBodyRatio       = 0.45;
       MinVolumeRatio     = 1.00;
       UseClusterUplift   = true;
-      PosPocFavorable    = 0.60;
+      PosComFavorable    = 0.60;
       MaxTop3Share       = 0.55;
       MinStrength        = 0.50;
       CooldownBars       = 3;
@@ -162,7 +161,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       if(UseClusterUplift)
       {
         // pos_poc в нужной части бара
-        bool posOk = up ? (last.PosPoc >= PosPocFavorable) : (last.PosPoc <= 1.0 - PosPocFavorable);
+        bool posOk = up ? (last.PosCom >= PosComFavorable) : (last.PosCom <= 1.0 - PosComFavorable);
         if(posOk) uplift += 0.12;
 
         // Не должно быть слишком высокой top3_share (иначе это абсорбция).
@@ -220,7 +219,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       int breakDepth, double bodyRatio, double avgVol, double baseStrength, double uplift)
     {
       return string.Format(CultureInfo.InvariantCulture,
-        "dir={0} priorExt={1} close={2} breakDepth={3} body={4:F2} vol={5} avgVol={6:F0} posPoc={7:F2} top3Share={8:F2} skew={9:F2} shape={10} base={11:F2} uplift={12:F2}",
+        "dir={0} priorExt={1} close={2} breakDepth={3} body={4:F2} vol={5} avgVol={6:F0} posCom={7:F2} top3Share={8:F2} skew={9:F2} shape={10} base={11:F2} uplift={12:F2}",
         up ? "up" : "down",
         priorExtreme,
         s.ClosePrice,
@@ -228,7 +227,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
         bodyRatio,
         s.Volume,
         avgVol,
-        s.PosPoc,
+        s.PosCom,
         s.Top3Share,
         s.Skewness,
         s.Shape,

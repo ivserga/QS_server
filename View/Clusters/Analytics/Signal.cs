@@ -26,30 +26,38 @@ namespace QScalp.View.ClustersSpace.Analytics
     VReversalUp,
     /// <summary>^-разворот: absorption у верха + медвежий разворотный кластер.</summary>
     VReversalDown,
-    /// <summary>Миграция POC вверх: 3 последних POC идут по возрастанию — продолжение тренда вверх.</summary>
-    PocMigrationUp,
-    /// <summary>Миграция POC вниз: 3 последних POC идут по убыванию — продолжение тренда вниз.</summary>
-    PocMigrationDown,
     /// <summary>HVN сыграл поддержкой (бар пришёл сверху, коснулся HVN, закрылся выше) — ожидание отскока вверх.</summary>
     HvnRejectUp,
     /// <summary>HVN сыграл сопротивлением (бар пришёл снизу, коснулся HVN, закрылся ниже) — ожидание отскока вниз.</summary>
     HvnRejectDown,
-    /// <summary>Распределение у вершины: lower_highs, угасание объёма, POC съезжает вниз.</summary>
+    /// <summary>Распределение у вершины: lower_highs, угасание объёма, центр объёма съезжает вниз.</summary>
     Distribution,
-    /// <summary>Накопление у дна: higher_lows, объём набирается на покупках, POC ползёт вверх.</summary>
+    /// <summary>Накопление у дна: higher_lows, объём набирается на покупках, центр объёма ползёт вверх.</summary>
     Accumulation,
-    /// <summary>Пробой вверх: close выше максимума N предыдущих баров на объёме, POC у верха бара.</summary>
+    /// <summary>Пробой вверх: close выше максимума N предыдущих баров на объёме, COM у верха бара.</summary>
     BreakoutUp,
-    /// <summary>Пробой вниз: close ниже минимума N предыдущих баров на объёме, POC у низа бара.</summary>
+    /// <summary>Пробой вниз: close ниже минимума N предыдущих баров на объёме, COM у низа бара.</summary>
     BreakoutDown,
     /// <summary>Двойная вершина: два пика на близких ценах с коррекцией между ними и затуханием на втором.</summary>
     DoubleTop,
     /// <summary>Двойное дно: два минимума на близких ценах с восстановлением между ними и истощением продаж на втором.</summary>
     DoubleBottom,
-    /// <summary>«Сиротское» закрытие у низа: close улетел вниз от области реальной торговли (POC/Top3) — ожидание отскока к POC.</summary>
+    /// <summary>Ложный пробой уровня вниз с объёмом и возвратом выше уровня (spring/reclaim).</summary>
+    FalseBreakReclaimUp,
+    /// <summary>Ложный пробой уровня вверх с объёмом и возвратом ниже уровня (upthrust/reclaim down).</summary>
+    FalseBreakReclaimDown,
+    /// <summary>«Сиротское» закрытие у низа: close далеко от центра объёма — ожидание отскока к COM.</summary>
     OrphanCloseUp,
-    /// <summary>«Сиротское» закрытие у верха: close улетел вверх от области реальной торговли — ожидание возврата к POC.</summary>
-    OrphanCloseDown
+    /// <summary>«Сиротское» закрытие у верха: close далеко от центра объёма — ожидание возврата к COM.</summary>
+    OrphanCloseDown,
+    /// <summary>Продолжение восходящего тренда: COM и close у верха, без признаков раздачи.</summary>
+    TrendContinuationUp,
+    /// <summary>Продолжение нисходящего тренда: COM и close у низа, без признаков накопления.</summary>
+    TrendContinuationDown,
+    /// <summary>Импульсный пролив вниз одним баром (объём + ход + close у low).</summary>
+    FlushDown,
+    /// <summary>Импульсный вынос вверх одним баром.</summary>
+    FlushUp
   }
 
   // ==========================================================================
@@ -68,7 +76,7 @@ namespace QScalp.View.ClustersSpace.Analytics
     public SignalKind Kind;
     public SignalDirection Direction;
 
-    /// <summary>Ключевая цена сигнала (уровень absorption / POC климакса и т. п.).</summary>
+    /// <summary>Ключевая цена сигнала (уровень absorption / COM климакса и т. п.).</summary>
     public int Price;
 
     /// <summary>Оценка уверенности сигнала в диапазоне [0..1].</summary>

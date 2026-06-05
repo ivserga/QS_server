@@ -138,3 +138,10 @@ build.log
 # Backup files
 *.bak
 *.backup
+
+# ClusterReplay tool: last run output is local-only
+Tools/ClusterReplay/last_run.txt
+
+# LLM analysis session artifacts (kept next to signals.csv)
+llm_analysis.log
+

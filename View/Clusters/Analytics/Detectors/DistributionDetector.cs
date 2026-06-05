@@ -22,7 +22,7 @@
 //       (чтобы не путать с активным аптрендом, где high — на текущем баре).
 //
 //  Cluster-uplift (если включён):
-//    + Доля баров окна с PosPoc < PosPocLowThreshold ≥ MinShareLowPosPoc:
+//    + Доля баров окна с PosPoc < PosComLowThreshold ≥ MinShareLowPosCom:
 //      «POC регулярно сидит в нижней части бара» — продают в низ.
 //    + Среднее Skewness по окну отрицательное (хвост распределения вниз).
 //    + Volume последнего бара меньше среднего по окну (затухание входа).
@@ -67,10 +67,10 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
     public bool   UseClusterUplift      { get; set; }
 
     /// <summary>«Низкий» pos_poc — продают в низ бара.</summary>
-    public double PosPocLowThreshold    { get; set; }
+    public double PosComLowThreshold    { get; set; }
 
     /// <summary>Минимальная доля баров с pos_poc &lt; threshold для бонуса.</summary>
-    public double MinShareLowPosPoc     { get; set; }
+    public double MinShareLowPosCom     { get; set; }
 
     /// <summary>Минимальная итоговая strength для эмиссии сигнала.</summary>
     public double MinStrength           { get; set; }
@@ -93,8 +93,8 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       MaxVolumeSlope       = -0.03;
       MinHighAgeBars       = 2;
       UseClusterUplift     = true;
-      PosPocLowThreshold   = 0.40;
-      MinShareLowPosPoc    = 0.45;
+      PosComLowThreshold   = 0.40;
+      MinShareLowPosCom    = 0.45;
       MinStrength          = 0.50;
       CooldownBars         = 5;
     }
@@ -150,9 +150,9 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
 
       if(UseClusterUplift)
       {
-        sharePosLow = WindowMath.SharePosPocBelow(history, Lookback, PosPocLowThreshold);
-        if(sharePosLow >= MinShareLowPosPoc)
-          uplift += 0.15 * Math.Min(1.0, (sharePosLow - MinShareLowPosPoc) / Math.Max(1e-6, 1.0 - MinShareLowPosPoc) + 0.5);
+        sharePosLow = WindowMath.SharePosComBelow(history, Lookback, PosComLowThreshold);
+        if(sharePosLow >= MinShareLowPosCom)
+          uplift += 0.15 * Math.Min(1.0, (sharePosLow - MinShareLowPosCom) / Math.Max(1e-6, 1.0 - MinShareLowPosCom) + 0.5);
 
         avgSkew = WindowMath.AverageSkewness(history, Lookback);
         if(avgSkew < 0)
@@ -206,7 +206,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       int posLowPct = (int)Math.Round(sharePosLow * 100);
 
       return string.Format(CultureInfo.InvariantCulture,
-        "Распределение у вершины: lower_highs {0}→{1}, объём {2:+0;-0;0}%/бар, POC внизу баров {3}% — цель {4}",
+        "Распределение у вершины: lower_highs {0}→{1}, объём {2:+0;-0;0}%/бар, COM внизу баров {3}% — цель {4}",
         hi1, hi2, volPct, posLowPct, targetLow);
     }
 

@@ -5,10 +5,8 @@
 //  Считает всё, что нужно детекторам для распознавания absorption / climax /
 //  разворотов, на основе формы volume-профиля:
 //
-//    • POC (Point of Control), PocVolume, PocShare
-//    • PosPoc — относительная позиция POC внутри бара [0..1]
+//    • CenterOfMass (VWAP профиля), PosCom, ComPrice
 //    • Value Area (VAL/VAH) — диапазон, вмещающий ValueAreaShare объёма
-//    • CenterOfMass — взвешенный VWAP профиля
 //    • MeanPrice, StdDev, Skewness, Kurtosis распределения объёма по ценам
 //    • LVN-зоны — "вакуумные" участки внутри бара
 //    • TopN — N самых объёмных уровней подряд (для климакс-концентрации)
@@ -21,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace QScalp.View.ClustersSpace.Analytics
 {
@@ -77,6 +76,31 @@ namespace QScalp.View.ClustersSpace.Analytics
     public int Ticks { get; private set; }
     public int Delta { get; private set; }
 
+    public long BuyVolume { get; private set; }
+    public long SellVolume { get; private set; }
+    public long InsideSpreadVolume { get; private set; }
+    public long AggressiveVolume { get { return BuyVolume + SellVolume; } }
+
+    public double InsideSpreadShare
+    {
+      get { return Volume > 0 ? InsideSpreadVolume / (double)Volume : 0.0; }
+    }
+
+    public double AggressiveShare
+    {
+      get { return Volume > 0 ? AggressiveVolume / (double)Volume : 0.0; }
+    }
+
+    public double DeltaShare
+    {
+      get { return Volume > 0 ? Delta / (double)Volume : 0.0; }
+    }
+
+    public double AggressiveDeltaShare
+    {
+      get { return AggressiveVolume > 0 ? Delta / (double)AggressiveVolume : 0.0; }
+    }
+
     public int OpenPrice { get; private set; }
     public int ClosePrice { get; private set; }
     public int MinPrice { get; private set; }
@@ -84,17 +108,6 @@ namespace QScalp.View.ClustersSpace.Analytics
 
     /// <summary>Высота бара в тиках (MaxPrice - MinPrice).</summary>
     public int Range { get { return MaxPrice - MinPrice; } }
-
-    // --- POC --------------------------------------------------------------
-
-    /// <summary>Цена с максимальным объёмом (Point of Control).</summary>
-    public int PocPrice { get; private set; }
-    /// <summary>Объём на POC.</summary>
-    public long PocVolume { get; private set; }
-    /// <summary>Доля POC в общем объёме бара [0..1].</summary>
-    public double PocShare { get; private set; }
-    /// <summary>Позиция POC внутри бара: 0 = на Min, 1 = на Max. Для бара шириной 0 — 0.5.</summary>
-    public double PosPoc { get; private set; }
 
     // --- Value Area -------------------------------------------------------
 
@@ -109,6 +122,10 @@ namespace QScalp.View.ClustersSpace.Analytics
 
     /// <summary>Взвешенное среднее цен по объёму (VWAP профиля).</summary>
     public double CenterOfMass { get; private set; }
+    /// <summary>Позиция центра масс внутри бара: 0 = Min, 1 = Max. Для range=0 — 0.5.</summary>
+    public double PosCom { get; private set; }
+    /// <summary>Ближайший тик к CenterOfMass.</summary>
+    public int ComPrice { get; private set; }
     /// <summary>Взвешенное стандартное отклонение цен по объёму.</summary>
     public double StdDev { get; private set; }
     /// <summary>Асимметрия (skewness) распределения объёма по ценам. &gt;0 — правый хвост, &lt;0 — левый.</summary>
@@ -167,8 +184,8 @@ namespace QScalp.View.ClustersSpace.Analytics
       long[] vols = new long[nLevels];
       long total = 0;
 
-      int pocIdx = 0;
-      long pocVol = 0;
+      int vaSeedIdx = 0;
+      long vaSeedVol = 0;
 
       for(int i = 0; i < nLevels; i++)
       {
@@ -177,15 +194,27 @@ namespace QScalp.View.ClustersSpace.Analytics
         vols[i] = v;
         total += v;
 
-        if(v > pocVol)
+        if(v > vaSeedVol)
         {
-          pocVol = v;
-          pocIdx = i;
+          vaSeedVol = v;
+          vaSeedIdx = i;
         }
       }
 
       if(total <= 0)
         return null;
+
+      long buyVolume = 0;
+      long sellVolume = 0;
+      long insideSpreadVolume = 0;
+      IList<ClusterPriceLevel> levels = c.GetPriceLevels();
+      for(int i = 0; i < levels.Count; i++)
+      {
+        ClusterPriceLevel level = levels[i];
+        buyVolume += level.AskVolume;
+        sellVolume += level.BidVolume;
+        insideSpreadVolume += level.InsideSpreadVolume;
+      }
 
       var s = new ClusterStats
       {
@@ -194,27 +223,21 @@ namespace QScalp.View.ClustersSpace.Analytics
         Volume = c.Volume,
         Ticks = c.Ticks,
         Delta = c.Delta,
+        BuyVolume = buyVolume,
+        SellVolume = sellVolume,
+        InsideSpreadVolume = insideSpreadVolume,
         OpenPrice = c.OpenPrice,
         ClosePrice = c.ClosePrice,
         MinPrice = min,
-        MaxPrice = max,
-
-        PocPrice = min + pocIdx * priceStep,
-        PocVolume = pocVol,
-        PocShare = (double)pocVol / total
+        MaxPrice = max
       };
 
-      s.PosPoc = range > 0
-        ? (double)(s.PocPrice - min) / range
-        : 0.5;
-
       // ------------------------------------------------------------
-      //  Value Area (классический алгоритм: от POC расширяемся в сторону
-      //  с большим соседним объёмом, пока не накопим VaShareTarget).
+      //  Value Area: расширяемся от уровня с max объёмом (vaSeed).
 
-      long accum = pocVol;
-      int lo = pocIdx;
-      int hi = pocIdx;
+      long accum = vaSeedVol;
+      int lo = vaSeedIdx;
+      int hi = vaSeedIdx;
 
       while(accum < total * VaShareTarget && (lo > 0 || hi < nLevels - 1))
       {
@@ -263,6 +286,8 @@ namespace QScalp.View.ClustersSpace.Analytics
 
       double mean = sumPv / total;
       s.CenterOfMass = mean;
+      s.PosCom = range > 0 ? (mean - min) / range : 0.5;
+      s.ComPrice = NearestTickPrice(mean, priceStep, min, max);
 
       double m2 = 0, m3 = 0, m4 = 0;
       for(int i = 0; i < nLevels; i++)
@@ -375,34 +400,50 @@ namespace QScalp.View.ClustersSpace.Analytics
 
     // **********************************************************************
 
+    static double Clamp01(double value)
+    {
+      if(value < 0) return 0;
+      if(value > 1) return 1;
+      return value;
+    }
+
+    // **********************************************************************
+
     /// <summary>
-    /// Объём, оказавшийся "за" POC к границе бара (т. е. между POC и MaxPrice
-    /// для абсорбции продавцом, или между MinPrice и POC для абсорбции покупателем).
+    /// Объём между ComPrice и границей бара (выше COM — above, ниже — !above).
     /// </summary>
-    public long VolumeBeyondPoc(bool above)
+    public long VolumeBeyondCom(bool above)
     {
       long v = 0;
 
       if(above)
       {
-        for(int p = PocPrice + PriceStep; p <= MaxPrice; p += PriceStep)
+        for(int p = ComPrice + PriceStep; p <= MaxPrice; p += PriceStep)
           v += Source.GetCellVolume(p);
       }
       else
       {
-        for(int p = MinPrice; p <= PocPrice - PriceStep; p += PriceStep)
+        for(int p = MinPrice; p <= ComPrice - PriceStep; p += PriceStep)
           v += Source.GetCellVolume(p);
       }
 
       return v;
     }
 
-    /// <summary>
-    /// Доля объёма, лежащая за POC к соответствующей границе бара.
-    /// </summary>
-    public double ShareBeyondPoc(bool above)
+    /// <summary>Доля объёма за ComPrice к соответствующей границе бара.</summary>
+    public double ShareBeyondCom(bool above)
     {
-      return Volume > 0 ? (double)VolumeBeyondPoc(above) / Volume : 0.0;
+      return Volume > 0 ? (double)VolumeBeyondCom(above) / Volume : 0.0;
+    }
+
+    static int NearestTickPrice(double price, int step, int min, int max)
+    {
+      if(step <= 0) return min;
+      int idx = (int)Math.Round((price - min) / (double)step);
+      int nLevels = (max - min) / step + 1;
+      if(idx < 0) idx = 0;
+      if(idx >= nLevels) idx = nLevels - 1;
+      return min + idx * step;
     }
 
     // **********************************************************************

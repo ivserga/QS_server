@@ -2,6 +2,9 @@
 //    Menu.cs (c) 2012 Nikolay Moroshkin, http://www.moroshkin.com/
 // ===================================================================
 
+using System;
+using System.Globalization;
+using System.IO;
 using System.Windows;
 using QScalp.Windows;
 
@@ -24,6 +27,7 @@ namespace QScalp
       menuClearLevels.InputGestureText = cfg.FKeyClearLevels.ToString();
 
       menuEmulation.IsChecked = cfg.u.TermEmulation;
+      menuLlmAnalysis.IsChecked = cfg.u.LlmAnalysisEnabled;
     }
 
     // **********************************************************************
@@ -97,6 +101,71 @@ namespace QScalp
 
     // **********************************************************************
 
+    private void ExportClustersButton_Click(object sender, RoutedEventArgs e)
+    {
+      DateTime from, to;
+      if(!sv.TryGetClusterPeriod(out from, out to))
+      {
+        MessageBox.Show("Нет кластеров для выгрузки.", cfg.ProgName,
+          MessageBoxButton.OK, MessageBoxImage.Information);
+        Focus();
+        return;
+      }
+
+      ClusterExportPeriodWindow pew = new ClusterExportPeriodWindow(from, to);
+      pew.Owner = this;
+
+      if(pew.ShowDialog() != true)
+      {
+        Focus();
+        return;
+      }
+
+      int count = sv.CountClustersForExport(pew.From, pew.To);
+      if(count == 0)
+      {
+        MessageBox.Show("В выбранном периоде нет кластеров.", cfg.ProgName,
+          MessageBoxButton.OK, MessageBoxImage.Information);
+        Focus();
+        return;
+      }
+
+      System.Windows.Forms.SaveFileDialog sfd = new System.Windows.Forms.SaveFileDialog();
+      sfd.Filter = "JSON (*.json)|*.json|Все файлы (*.*)|*.*";
+      sfd.DefaultExt = "json";
+      sfd.RestoreDirectory = true;
+      sfd.Title = "Выгрузить кластеры для нейросети";
+      sfd.FileName = MakeSafeFileName("clusters." + cfg.u.SecCode + "." + cfg.u.ClassCode
+        + "." + DateTime.Now.ToString("yyyyMMdd.HHmmss", CultureInfo.InvariantCulture) + ".json");
+
+      if(sfd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        try
+        {
+          int exported = sv.ExportClustersForAi(pew.From, pew.To, sfd.FileName);
+          MessageBox.Show("Экспортировано кластеров: " + exported.ToString(CultureInfo.InvariantCulture),
+            cfg.ProgName, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch(Exception ex)
+        {
+          MessageBox.Show("Ошибка выгрузки кластеров: " + ex.Message, cfg.ProgName,
+            MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+      Focus();
+    }
+
+    // **********************************************************************
+
+    static string MakeSafeFileName(string fileName)
+    {
+      foreach(char c in Path.GetInvalidFileNameChars())
+        fileName = fileName.Replace(c, '_');
+
+      return fileName;
+    }
+
+    // **********************************************************************
+
     private void MenuSettings_Click(object sender, RoutedEventArgs e)
     {
       if(cfgw == null)
@@ -143,6 +212,14 @@ namespace QScalp
       }
 
       menuEmulation.IsChecked = cfg.u.TermEmulation;
+    }
+
+    // **********************************************************************
+
+    private void MenuLlmAnalysis_Click(object sender, RoutedEventArgs e)
+    {
+      cfg.u.LlmAnalysisEnabled = !cfg.u.LlmAnalysisEnabled;
+      menuLlmAnalysis.IsChecked = cfg.u.LlmAnalysisEnabled;
     }
 
     // **********************************************************************

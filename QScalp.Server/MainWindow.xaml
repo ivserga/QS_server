@@ -1,7 +1,7 @@
 <Window x:Class="QScalp.Server.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="QScalp Server" Width="620" Height="560"
+        Title="QScalp Server" Width="640" Height="720"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResizeWithGrip"
         Closing="Window_Closing">
@@ -32,7 +32,7 @@
         <GroupBox Grid.Row="0" Header="Настройки подключения" Padding="8">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="130"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
@@ -43,26 +43,69 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <Label Grid.Row="0" Content="API Base URL:"/>
-                <TextBox Grid.Row="0" Grid.Column="1" x:Name="tbApiBaseUrl"/>
+                <Label Grid.Row="0" Content="Источник данных:"/>
+                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="cbDataSource" Height="26" Margin="0,2">
+                    <ComboBoxItem Content="Massive (WebSocket)" Tag="Massive" IsSelected="True"/>
+                    <ComboBoxItem Content="Striker (HTTP API)" Tag="Striker"/>
+                    <ComboBoxItem Content="Striker WS API (локальный)" Tag="StrikerWs"/>
+                    <ComboBoxItem Content="Воспроизведение записи" Tag="Replay"/>
+                </ComboBox>
 
-                <Label Grid.Row="1" Content="WS Base URL:"/>
-                <TextBox Grid.Row="1" Grid.Column="1" x:Name="tbWsBaseUrl"/>
+                <Label Grid.Row="1" Content="Striker URL:"/>
+                <TextBox Grid.Row="1" Grid.Column="1" x:Name="tbStrikerBaseUrl"/>
 
-                <Label Grid.Row="2" Content="API Key:"/>
-                <PasswordBox Grid.Row="2" Grid.Column="1" x:Name="tbApiKey"/>
+                <Label Grid.Row="2" Content="Striker опрос (мс):"/>
+                <TextBox Grid.Row="2" Grid.Column="1" x:Name="tbStrikerPollMs" Width="80" HorizontalAlignment="Left"/>
 
-                <Label Grid.Row="3" Content="Listen URL:"/>
-                <TextBox Grid.Row="3" Grid.Column="1" x:Name="tbListenUrl"/>
+                <CheckBox Grid.Row="3" Grid.Column="1" x:Name="cbStrikerTimeSales"
+                          Content="Striker: опрашивать Time &amp; Sales (сделки)" Margin="0,4"/>
 
-                <Label Grid.Row="4" Content="Max Clients:"/>
-                <TextBox Grid.Row="4" Grid.Column="1" x:Name="tbMaxClients" Width="60" HorizontalAlignment="Left"/>
+                <Label Grid.Row="4" Content="Striker WS URL:"/>
+                <TextBox Grid.Row="4" Grid.Column="1" x:Name="tbStrikerWsUrl"/>
 
-                <CheckBox Grid.Row="5" Grid.Column="1" x:Name="cbDebugMode" Content="Debug Mode" Margin="0,6"/>
+                <Label Grid.Row="5" Content="Striker WS пароль:"/>
+                <PasswordBox Grid.Row="5" Grid.Column="1" x:Name="tbStrikerWsPwd"/>
 
-                <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" Margin="0,6">
+                <Label Grid.Row="6" Content="Striker WS streamerID:"/>
+                <TextBox Grid.Row="6" Grid.Column="1" x:Name="tbStrikerWsStreamer"/>
+
+                <Label Grid.Row="7" Content="API Base URL:"/>
+                <TextBox Grid.Row="7" Grid.Column="1" x:Name="tbApiBaseUrl"/>
+
+                <Label Grid.Row="8" Content="WS Base URL:"/>
+                <TextBox Grid.Row="8" Grid.Column="1" x:Name="tbWsBaseUrl"/>
+
+                <Label Grid.Row="9" Content="API Key:"/>
+                <PasswordBox Grid.Row="9" Grid.Column="1" x:Name="tbApiKey"/>
+
+                <Label Grid.Row="10" Content="Listen URL:"/>
+                <TextBox Grid.Row="10" Grid.Column="1" x:Name="tbListenUrl"/>
+
+                <Label Grid.Row="11" Content="Max Clients:"/>
+                <TextBox Grid.Row="11" Grid.Column="1" x:Name="tbMaxClients" Width="60" HorizontalAlignment="Left"/>
+
+                <CheckBox Grid.Row="12" Grid.Column="1" x:Name="cbDebugMode" Content="Debug Mode" Margin="0,6"/>
+
+                <Label Grid.Row="13" Content="Сессия Replay:"/>
+                <TextBox Grid.Row="13" Grid.Column="1" x:Name="tbReplaySessionPath"
+                         ToolTip="Папка с AAPL.jsonl (запись — QScalp.Recorder)"/>
+
+                <StackPanel Grid.Row="14" Grid.Column="1" Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Скорость:" VerticalAlignment="Center" Margin="0"/>
+                    <TextBox x:Name="tbReplaySpeed" Width="50" Margin="4,2"/>
+                    <CheckBox x:Name="cbReplayLoop" Content="Зациклить" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="15" Grid.Column="1" Orientation="Horizontal" Margin="0,6">
                     <Button x:Name="btnStart" Content="▶  Запустить" Width="120" Height="30"
                             Click="BtnStart_Click" FontWeight="SemiBold"/>
                     <Button x:Name="btnStop" Content="■  Остановить" Width="120" Height="30"

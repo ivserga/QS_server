@@ -66,7 +66,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
     /// что сглаженный центр объёма может слегка плавать даже при практически
     /// идентичных профилях. 0.5 priceStep — стандартное значение.
     /// </summary>
-    public double PocCenterTolTicks         { get; set; }
+    public double VolumeCenterTolTicks         { get; set; }
 
     public double MinStrength               { get; set; }
     public int    CooldownBars              { get; set; }
@@ -91,7 +91,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       MinPostPeakDropTicks    = 3;
       UseClusterUplift        = true;
       MaxVolumeRatio          = 1.10; // peak2.volume <= peak1.volume * 1.10 (т.е. ≈ не выше)
-      PocCenterTolTicks       = 0.5;
+      VolumeCenterTolTicks       = 0.5;
       MinStrength             = 0.50;
       CooldownBars            = 8;
     }
@@ -158,10 +158,10 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
         // Сравниваем сглаженный центр объёма с допуском, чтобы не штрафовать
         // за дискретный скачок POC на 1 тик при близких объёмах двух соседних
         // уровней (иначе один тик дрожания обнуляет весь uplift).
-        double pocCenter1 = WindowMath.PocCenter(peak1);
-        double pocCenter2 = WindowMath.PocCenter(peak2);
-        double pocTol     = PocCenterTolTicks * Math.Max(1, last.PriceStep);
-        if(pocCenter2 <= pocCenter1 + pocTol) uplift += 0.10;
+        double volCenter1 = WindowMath.VolumeCenter(peak1);
+        double volCenter2 = WindowMath.VolumeCenter(peak2);
+        double volTol     = VolumeCenterTolTicks * Math.Max(1, last.PriceStep);
+        if(volCenter2 <= volCenter1 + volTol) uplift += 0.10;
         else uplift -= 0.05;
 
         if(peak1.Volume > 0)
@@ -171,7 +171,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
           if(volRatio < 0.80) uplift += 0.05; // сильное затухание объёма
         }
 
-        if(peak2.PosPoc < peak1.PosPoc) uplift += 0.05;
+        if(peak2.PosCom < peak1.PosCom) uplift += 0.05;
 
         if(peak2.Top3Share > peak1.Top3Share + 0.05) uplift += 0.05;
       }
@@ -212,11 +212,11 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       double baseStrength, double uplift)
     {
       return string.Format(CultureInfo.InvariantCulture,
-        "p1Hi={0} p2Hi={1} idx1={2} idx2={3} neckline={4} correction={5} postDrop={6} p1Vol={7} p2Vol={8} p1Poc={9} p2Poc={10} p1PocC={11:F2} p2PocC={12:F2} p1PosPoc={13:F2} p2PosPoc={14:F2} base={15:F2} uplift={16:F2}",
+        "p1Hi={0} p2Hi={1} idx1={2} idx2={3} neckline={4} correction={5} postDrop={6} p1Vol={7} p2Vol={8} p1Com={9} p2Com={10} p1VolC={11:F2} p2VolC={12:F2} p1PosCom={13:F2} p2PosCom={14:F2} base={15:F2} uplift={16:F2}",
         peak1.MaxPrice, peak2.MaxPrice, idx1, idx2, neckline, correction, postDrop,
-        peak1.Volume, peak2.Volume, peak1.PocPrice, peak2.PocPrice,
-        WindowMath.PocCenter(peak1), WindowMath.PocCenter(peak2),
-        peak1.PosPoc, peak2.PosPoc, baseStrength, uplift);
+        peak1.Volume, peak2.Volume, peak1.ComPrice, peak2.ComPrice,
+        WindowMath.VolumeCenter(peak1), WindowMath.VolumeCenter(peak2),
+        peak1.PosCom, peak2.PosCom, baseStrength, uplift);
     }
 
     static string FormatVolume(long v)

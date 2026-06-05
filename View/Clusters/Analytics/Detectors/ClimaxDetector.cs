@@ -40,8 +40,8 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
     public double MinTop3Share        { get; set; }
     public double VolumeMultiplier    { get; set; }
     public double MinDensityMultiplier{ get; set; }
-    public double EdgePosPocTop       { get; set; }
-    public double EdgePosPocBottom    { get; set; }
+    public double EdgePosComTop       { get; set; }
+    public double EdgePosComBottom    { get; set; }
     public int AverageWindow          { get; set; }
     public int CooldownBars           { get; set; }
 
@@ -58,8 +58,8 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       MinTop3Share = 0.40;
       VolumeMultiplier = 1.0;
       MinDensityMultiplier = 1.3;
-      EdgePosPocTop = 0.75;
-      EdgePosPocBottom = 0.25;
+      EdgePosComTop = 0.75;
+      EdgePosComBottom = 0.25;
       AverageWindow = 5;
       CooldownBars = 3;
     }
@@ -83,8 +83,8 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
         return null;
 
       // Направление по позиции POC.
-      bool selling = s.PosPoc <= EdgePosPocBottom;
-      bool buying  = s.PosPoc >= EdgePosPocTop;
+      bool selling = s.PosCom <= EdgePosComBottom;
+      bool buying  = s.PosCom >= EdgePosComTop;
 
       if(!selling && !buying)
         return null;
@@ -124,7 +124,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
         Time = s.Source.DateTime,
         Kind = selling ? SignalKind.SellingClimax : SignalKind.BuyingClimax,
         Direction = selling ? SignalDirection.Up : SignalDirection.Down, // ожидаемый откат
-        Price = s.PocPrice,
+        Price = s.ComPrice,
         Strength = strength,
         Message = FormatMessage(s, selling, density, avgDensity),
         Details = FormatDetails(s, selling, density, avgDensity, avgVol)
@@ -140,28 +140,28 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       double densityRatio = avgDensity > 0 ? density / avgDensity : 0;
 
       return string.Format(CultureInfo.InvariantCulture,
-        "Климакс {0}: {1}% объёма в зоне {2}-{3} (x{4:F1} плотности), POC {5} — {6}",
+        "Климакс {0}: {1}% объёма в зоне {2}-{3} (x{4:F1} плотности), COM {5} — {6}",
         dir,
         (int)Math.Round(s.Top3Share * 100),
         s.Top3From,
         s.Top3To,
         densityRatio,
-        s.PocPrice,
+        s.ComPrice,
         react);
     }
 
     static string FormatDetails(ClusterStats s, bool selling, double density, double avgDensity, double avgVol)
     {
       return string.Format(CultureInfo.InvariantCulture,
-        "poc={0} top3Share={1:F2} top3={2}-{3} vol={4} avgVol={5:F0} density={6:F1} avgDensity={7:F1} posPoc={8:F2} shape={9}",
-        s.PocPrice,
+        "com={0} top3Share={1:F2} top3={2}-{3} vol={4} avgVol={5:F0} density={6:F1} avgDensity={7:F1} posCom={8:F2} shape={9}",
+        s.ComPrice,
         s.Top3Share,
         s.Top3From, s.Top3To,
         s.Volume,
         avgVol,
         density,
         avgDensity,
-        s.PosPoc,
+        s.PosCom,
         s.Shape);
     }
 

@@ -133,6 +133,8 @@ namespace QScalp
 
     protected override void OnClosed(EventArgs e)
     {
+      sv.ShutdownLlm();
+
       dp.Disconnect();
       tmgr.Disconnect();
 
