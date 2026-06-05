@@ -7,6 +7,9 @@
 //  Звёздочки — это визуализация Signal.Strength [0..1] в 5 делений, чтобы
 //  пользователь сразу видел силу паттерна не вчитываясь в число.
 //
+//  На экран не выводятся сигналы со Strength < MinMessengerStrength (0.6),
+//  чтобы слабые паттерны не отвлекали; полный журнал по-прежнему в CSV (SignalLogSink).
+//
 // ==========================================================================
 
 using System;
@@ -19,6 +22,9 @@ namespace QScalp.View.ClustersSpace.Analytics.Sinks
 
   sealed class MessengerSink : ISignalSink
   {
+    /// <summary>Порог силы паттерна: ниже этого значения сообщение не показывается в Messenger.</summary>
+    const double MinMessengerStrength = 0.6;
+
     readonly ViewManager vmgr;
 
     public MessengerSink(ViewManager vmgr)
@@ -31,11 +37,12 @@ namespace QScalp.View.ClustersSpace.Analytics.Sinks
       if(signal == null || string.IsNullOrEmpty(signal.Message))
         return;
 
+      if(signal.Strength < MinMessengerStrength)
+        return;
+
       string prefix = FormatStrength(signal.Strength);
       vmgr.MsgQueue.Enqueue(new Message(prefix + " " + signal.Message));
     }
-
-    // **********************************************************************
 
     static string FormatStrength(double strength)
     {

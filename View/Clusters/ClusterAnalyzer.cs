@@ -2,6 +2,10 @@
 //  ClusterAnalyzer.cs — Анализ паттернов поглощения объёма в кластерах
 // ======================================================================
 
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+
 namespace QScalp.View.ClustersSpace
 {
   static class ClusterAnalyzer
@@ -12,17 +16,27 @@ namespace QScalp.View.ClustersSpace
     public enum ClimaxSignal { None, BearishClimax, BullishClimax }
     public enum RejectionSignal { None, ResistanceRejection, SupportRejection }
 
-    /// <summary>
-    /// Порог доли объёма (выше/ниже ориентирной цены) для срабатывания сигнала поглощения.
-    /// При значении 0.6 сигнал выдаётся, если >= 60% объёма последнего кластера
-    /// расположено по противоположную от тренда сторону от ориентирной цены.
-    /// </summary>
-    const double VolumeRatioThreshold = 0.6;
+    /// <summary>Порог доли объёма для legacy-климакса (отдельно от поглощения).</summary>
+    const double LegacyClimaxVolumeRatioThreshold = 0.6;
 
-    /// <summary>
-    /// Минимальное превышение объёма c3 над c2 для паттерна поглощения (1.2 = +20%).
-    /// </summary>
-    const double AbsorptionVolumeMultiplier = 1.2;
+    /// <summary>Параметры 3-кластерного поглощения (из cfg.u.LegacyAbsorption*).</summary>
+    public struct LegacyAbsorptionParams
+    {
+      public double VolumeRatioThreshold;
+      public double VolumeMultiplier;
+
+      public static LegacyAbsorptionParams Default
+      {
+        get
+        {
+          return new LegacyAbsorptionParams
+          {
+            VolumeRatioThreshold = 0.68,
+            VolumeMultiplier = 1.35
+          };
+        }
+      }
+    }
 
     /// <summary>
     /// Множитель объёма для определения кульминации.
@@ -37,7 +51,70 @@ namespace QScalp.View.ClustersSpace
     const double RejectionCellRatioThreshold = 0.10;
     const int RejectionMinTouches = 2;
 
-    
+    static readonly int[] TimeframeMultipliers = new int[] { 1, 2, 4 };
+
+    // **********************************************************************
+
+    /// <summary>
+    /// Анализирует последние закрытые time-based кластеры на текущем и старших
+    /// таймфреймах: base, base*2, base*4. Старшие бары собираются rolling-окном,
+    /// которое заканчивается последним закрытым базовым кластером.
+    /// </summary>
+    public static IList<string> AnalyzeTimeframes(IList<Cluster> closedClusters, int baseSeconds)
+    {
+      return AnalyzeTimeframes(closedClusters, baseSeconds, LegacyAbsorptionParams.Default);
+    }
+
+    public static IList<string> AnalyzeTimeframes(
+      IList<Cluster> closedClusters,
+      int baseSeconds,
+      LegacyAbsorptionParams absorption)
+    {
+      var messages = new List<string>();
+
+      if(closedClusters == null || closedClusters.Count < 3 || baseSeconds <= 0)
+        return messages;
+
+      int maxRequired = 0;
+      for(int i = 0; i < TimeframeMultipliers.Length; i++)
+      {
+        int required = TimeframeMultipliers[i] * 3;
+        if(required > maxRequired)
+          maxRequired = required;
+      }
+
+      int sourceStart = Math.Max(0, closedClusters.Count - maxRequired);
+      var frames = new List<ClusterFrame>(closedClusters.Count - sourceStart);
+
+      for(int i = sourceStart; i < closedClusters.Count; i++)
+      {
+        ClusterFrame f = ClusterFrame.FromCluster(closedClusters[i]);
+        if(f == null)
+          return messages;
+
+        frames.Add(f);
+      }
+
+      var results = new List<TimeframeAnalysis>();
+
+      for(int i = 0; i < TimeframeMultipliers.Length; i++)
+      {
+        TimeframeAnalysis result = AnalyzeTimeframe(frames, baseSeconds, TimeframeMultipliers[i], absorption);
+        if(result != null)
+          results.Add(result);
+      }
+
+      AddAbsorptionMessages(messages, results, Signal.BearishDivergence, absorption);
+      AddAbsorptionMessages(messages, results, Signal.BullishDivergence, absorption);
+
+      AddClimaxMessages(messages, results, ClimaxSignal.BearishClimax);
+      AddClimaxMessages(messages, results, ClimaxSignal.BullishClimax);
+
+      AddRejectionMessages(messages, results, RejectionSignal.ResistanceRejection);
+      AddRejectionMessages(messages, results, RejectionSignal.SupportRejection);
+
+      return messages;
+    }
 
     // **********************************************************************
 
@@ -58,6 +135,23 @@ namespace QScalp.View.ClustersSpace
     /// </summary>
     public static Signal Analyze(Cluster c1, Cluster c2, Cluster c3)
     {
+      return Analyze(c1, c2, c3, LegacyAbsorptionParams.Default);
+    }
+
+    public static Signal Analyze(Cluster c1, Cluster c2, Cluster c3, LegacyAbsorptionParams absorption)
+    {
+      ClusterFrame f1 = ClusterFrame.FromCluster(c1);
+      ClusterFrame f2 = ClusterFrame.FromCluster(c2);
+      ClusterFrame f3 = ClusterFrame.FromCluster(c3);
+
+      if(f1 == null || f2 == null || f3 == null)
+        return Signal.None;
+
+      return Analyze(f1, f2, f3, absorption);
+    }
+
+    static Signal Analyze(ClusterFrame c1, ClusterFrame c2, ClusterFrame c3, LegacyAbsorptionParams absorption)
+    {
       if(c1.Volume == 0 || c2.Volume == 0 || c3.Volume == 0)
         return Signal.None;
 
@@ -73,7 +167,7 @@ namespace QScalp.View.ClustersSpace
       if(!uptrend && !downtrend)
         return Signal.None;
 
-      if(c3.Volume < c2.Volume * AbsorptionVolumeMultiplier || c3.Volume <= c1.Volume)
+      if(c3.Volume < c2.Volume * absorption.VolumeMultiplier || c3.Volume <= c1.Volume)
         return Signal.None;
 
       bool c3Reversed = uptrend
@@ -89,10 +183,10 @@ namespace QScalp.View.ClustersSpace
       if(distributed == 0)
         return Signal.None;
 
-      if(uptrend && (double)volumeAbove / distributed > VolumeRatioThreshold)
+      if(uptrend && (double)volumeAbove / distributed > absorption.VolumeRatioThreshold)
         return Signal.BearishDivergence;
 
-      if(downtrend && (double)volumeBelow / distributed > VolumeRatioThreshold)
+      if(downtrend && (double)volumeBelow / distributed > absorption.VolumeRatioThreshold)
         return Signal.BullishDivergence;
 
       return Signal.None;
@@ -104,6 +198,25 @@ namespace QScalp.View.ClustersSpace
     /// Формирует текстовое сообщение для пользователя по результату анализа поглощения.
     /// </summary>
     public static string FormatMessage(Signal signal, Cluster c3)
+    {
+      return FormatMessage(signal, null, null, c3, LegacyAbsorptionParams.Default);
+    }
+
+    public static string FormatMessage(Signal signal, Cluster c1, Cluster c2, Cluster c3)
+    {
+      return FormatMessage(signal, c1, c2, c3, LegacyAbsorptionParams.Default);
+    }
+
+    public static string FormatMessage(Signal signal, Cluster c1, Cluster c2, Cluster c3, LegacyAbsorptionParams absorption)
+    {
+      ClusterFrame f1 = ClusterFrame.FromCluster(c1);
+      ClusterFrame f2 = ClusterFrame.FromCluster(c2);
+      ClusterFrame f3 = ClusterFrame.FromCluster(c3);
+
+      return f3 != null ? FormatMessage(signal, f1, f2, f3, absorption) : string.Empty;
+    }
+
+    static string FormatMessage(Signal signal, ClusterFrame c1, ClusterFrame c2, ClusterFrame c3, LegacyAbsorptionParams absorption)
     {
       bool c3Reversed = signal == Signal.BearishDivergence
         ? c3.ClosePrice < c3.OpenPrice
@@ -120,14 +233,43 @@ namespace QScalp.View.ClustersSpace
         ? (int)(100.0 * (signal == Signal.BearishDivergence ? volumeAbove : volumeBelow) / distributed)
         : 0;
 
-      if(signal == Signal.BearishDivergence)
-        return string.Format(
-          "Поглощение продавцами: тренд вверх, объём +20%, {0}% объёма выше {1} ({2}) — возможен разворот вниз",
-          pct, refLabel, refPrice);
+      double volumeRatio = AbsorptionVolumeRatio(c1, c2, c3);
+      double strength = AbsorptionStrength(volumeRatio, absorption.VolumeMultiplier);
 
-      return string.Format(
-        "Поглощение покупателями: тренд вниз, объём +20%, {0}% объёма ниже {1} ({2}) — возможен разворот вверх",
-        pct, refLabel, refPrice);
+      if(signal == Signal.BearishDivergence)
+        return string.Format(CultureInfo.InvariantCulture,
+          "Поглощение продавцами: тренд вверх, объём x{0:F1} к двум предыдущим, сила {1:F2}, {2}% объёма выше {3} ({4}) — возможен разворот вниз",
+          volumeRatio, strength, pct, refLabel, FormatPrice(refPrice));
+
+      return string.Format(CultureInfo.InvariantCulture,
+        "Поглощение покупателями: тренд вниз, объём x{0:F1} к двум предыдущим, сила {1:F2}, {2}% объёма ниже {3} ({4}) — возможен разворот вверх",
+        volumeRatio, strength, pct, refLabel, FormatPrice(refPrice));
+    }
+
+    // **********************************************************************
+
+    static double AbsorptionVolumeRatio(ClusterFrame c1, ClusterFrame c2, ClusterFrame c3)
+    {
+      if(c1 == null || c2 == null || c3 == null)
+        return 0;
+
+      long prevMax = c1.Volume > c2.Volume ? c1.Volume : c2.Volume;
+      return prevMax > 0 ? c3.Volume / (double)prevMax : 0;
+    }
+
+    static double AbsorptionStrength(double volumeRatio, double volumeMultiplier)
+    {
+      if(volumeRatio <= 0)
+        return 0;
+
+      const double FullStrengthVolumeRatio = 3.0;
+      double strength = 0.50
+        + (volumeRatio - volumeMultiplier)
+          / (FullStrengthVolumeRatio - volumeMultiplier) * 0.50;
+
+      if(strength < 0) return 0;
+      if(strength > 1) return 1;
+      return strength;
     }
 
     // **********************************************************************
@@ -143,10 +285,22 @@ namespace QScalp.View.ClustersSpace
     /// </summary>
     public static ClimaxSignal AnalyzeClimax(Cluster c1, Cluster c2, Cluster c3)
     {
+      ClusterFrame f1 = ClusterFrame.FromCluster(c1);
+      ClusterFrame f2 = ClusterFrame.FromCluster(c2);
+      ClusterFrame f3 = ClusterFrame.FromCluster(c3);
+
+      if(f1 == null || f2 == null || f3 == null)
+        return ClimaxSignal.None;
+
+      return AnalyzeClimax(f1, f2, f3);
+    }
+
+    static ClimaxSignal AnalyzeClimax(ClusterFrame c1, ClusterFrame c2, ClusterFrame c3)
+    {
       if(c1.Volume == 0 || c2.Volume == 0 || c3.Volume == 0)
         return ClimaxSignal.None;
 
-      int maxPrevVolume = c1.Volume > c2.Volume ? c1.Volume : c2.Volume;
+      long maxPrevVolume = c1.Volume > c2.Volume ? c1.Volume : c2.Volume;
       if(c3.Volume < maxPrevVolume * VolumeClimaxMultiplier)
         return ClimaxSignal.None;
 
@@ -160,10 +314,10 @@ namespace QScalp.View.ClustersSpace
       double ratioBelow = (double)volumeBelow / distributed;
       double ratioAbove = (double)volumeAbove / distributed;
 
-      if(c3.ClosePrice < c3.OpenPrice && ratioBelow > VolumeRatioThreshold)
+      if(c3.ClosePrice < c3.OpenPrice && ratioBelow > LegacyClimaxVolumeRatioThreshold)
         return ClimaxSignal.BearishClimax;
 
-      if(c3.ClosePrice > c3.OpenPrice && ratioAbove > VolumeRatioThreshold)
+      if(c3.ClosePrice > c3.OpenPrice && ratioAbove > LegacyClimaxVolumeRatioThreshold)
         return ClimaxSignal.BullishClimax;
 
       return ClimaxSignal.None;
@@ -176,7 +330,19 @@ namespace QScalp.View.ClustersSpace
     /// </summary>
     public static string FormatClimaxMessage(ClimaxSignal signal, Cluster c1, Cluster c2, Cluster c3)
     {
-      int maxPrevVolume = c1.Volume > c2.Volume ? c1.Volume : c2.Volume;
+      ClusterFrame f1 = ClusterFrame.FromCluster(c1);
+      ClusterFrame f2 = ClusterFrame.FromCluster(c2);
+      ClusterFrame f3 = ClusterFrame.FromCluster(c3);
+
+      if(f1 == null || f2 == null || f3 == null)
+        return string.Empty;
+
+      return FormatClimaxMessage(signal, f1, f2, f3);
+    }
+
+    static string FormatClimaxMessage(ClimaxSignal signal, ClusterFrame c1, ClusterFrame c2, ClusterFrame c3)
+    {
+      long maxPrevVolume = c1.Volume > c2.Volume ? c1.Volume : c2.Volume;
       double volRatio = (double)c3.Volume / maxPrevVolume;
 
       long volumeAbove, volumeBelow;
@@ -193,7 +359,7 @@ namespace QScalp.View.ClustersSpace
 
       return string.Format(
         "Объёмный выброс {0}: объём x{1:F1} ({2}), {3}% объёма {4} закрытия ({5}) — возможна кульминация и разворот",
-        direction, volRatio, c3.Volume, pct, side, c3.ClosePrice);
+        direction, volRatio, c3.Volume, pct, side, FormatPrice(c3.ClosePrice));
     }
 
     // **********************************************************************
@@ -208,6 +374,18 @@ namespace QScalp.View.ClustersSpace
     /// SupportRejection    — отторжение снизу (стена на minPrice, close выше).
     /// </summary>
     public static RejectionSignal AnalyzeRejection(Cluster c1, Cluster c2, Cluster c3)
+    {
+      ClusterFrame f1 = ClusterFrame.FromCluster(c1);
+      ClusterFrame f2 = ClusterFrame.FromCluster(c2);
+      ClusterFrame f3 = ClusterFrame.FromCluster(c3);
+
+      if(f1 == null || f2 == null || f3 == null)
+        return RejectionSignal.None;
+
+      return AnalyzeRejection(f1, f2, f3);
+    }
+
+    static RejectionSignal AnalyzeRejection(ClusterFrame c1, ClusterFrame c2, ClusterFrame c3)
     {
       if(c3.Volume == 0)
         return RejectionSignal.None;
@@ -246,6 +424,18 @@ namespace QScalp.View.ClustersSpace
     /// </summary>
     public static string FormatRejectionMessage(RejectionSignal signal, Cluster c1, Cluster c2, Cluster c3)
     {
+      ClusterFrame f1 = ClusterFrame.FromCluster(c1);
+      ClusterFrame f2 = ClusterFrame.FromCluster(c2);
+      ClusterFrame f3 = ClusterFrame.FromCluster(c3);
+
+      if(f1 == null || f2 == null || f3 == null)
+        return string.Empty;
+
+      return FormatRejectionMessage(signal, f1, f2, f3);
+    }
+
+    static string FormatRejectionMessage(RejectionSignal signal, ClusterFrame c1, ClusterFrame c2, ClusterFrame c3)
+    {
       bool resistance = signal == RejectionSignal.ResistanceRejection;
       int level = resistance ? c3.MaxPrice : c3.MinPrice;
       long volAtLevel = c3.GetCellVolume(level);
@@ -259,7 +449,338 @@ namespace QScalp.View.ClustersSpace
 
       return string.Format(
         "{0} на {1}: {2}% объёма ({3}) на уровне, касаний: {4}, закрытие {5}",
-        type, level, pct, volAtLevel, touches, c3.ClosePrice);
+        type, FormatPrice(level), pct, volAtLevel, touches, FormatPrice(c3.ClosePrice));
+    }
+
+    // **********************************************************************
+
+    static string FormatPrice(int price)
+    {
+      return Price.GetString(price);
+    }
+
+    // **********************************************************************
+
+    static TimeframeAnalysis AnalyzeTimeframe(
+      IList<ClusterFrame> frames,
+      int baseSeconds,
+      int multiplier,
+      LegacyAbsorptionParams absorption)
+    {
+      int required = multiplier * 3;
+      if(frames.Count < required)
+        return null;
+
+      int start = frames.Count - required;
+      if(!IsContiguous(frames, start, frames.Count, baseSeconds))
+        return null;
+
+      ClusterFrame c1 = ClusterFrame.Merge(frames, start, multiplier);
+      ClusterFrame c2 = ClusterFrame.Merge(frames, start + multiplier, multiplier);
+      ClusterFrame c3 = ClusterFrame.Merge(frames, start + multiplier * 2, multiplier);
+
+      if(c1 == null || c2 == null || c3 == null)
+        return null;
+
+      return new TimeframeAnalysis
+      {
+        Seconds = baseSeconds * multiplier,
+        C1 = c1,
+        C2 = c2,
+        C3 = c3,
+        Absorption = Analyze(c1, c2, c3, absorption),
+        Climax = AnalyzeClimax(c1, c2, c3),
+        Rejection = AnalyzeRejection(c1, c2, c3)
+      };
+    }
+
+    static bool IsContiguous(IList<ClusterFrame> frames, int start, int end, int baseSeconds)
+    {
+      long expectedTicks = baseSeconds * TimeSpan.TicksPerSecond;
+
+      for(int i = start + 1; i < end; i++)
+      {
+        if(frames[i].DateTime.Ticks - frames[i - 1].DateTime.Ticks != expectedTicks)
+          return false;
+      }
+
+      return true;
+    }
+
+    static void AddAbsorptionMessages(
+      List<string> messages,
+      IList<TimeframeAnalysis> results,
+      Signal signal,
+      LegacyAbsorptionParams absorption)
+    {
+      var seconds = new List<int>();
+      TimeframeAnalysis sample = null;
+
+      for(int i = 0; i < results.Count; i++)
+        if(results[i].Absorption == signal)
+        {
+          seconds.Add(results[i].Seconds);
+          if(sample == null)
+            sample = results[i];
+        }
+
+      if(seconds.Count > 0 && sample != null)
+        messages.Add(AppendTimeframes(FormatMessage(signal, sample.C1, sample.C2, sample.C3, absorption), seconds));
+    }
+
+    static void AddClimaxMessages(List<string> messages, IList<TimeframeAnalysis> results, ClimaxSignal signal)
+    {
+      var seconds = new List<int>();
+      TimeframeAnalysis sample = null;
+
+      for(int i = 0; i < results.Count; i++)
+        if(results[i].Climax == signal)
+        {
+          seconds.Add(results[i].Seconds);
+          if(sample == null)
+            sample = results[i];
+        }
+
+      if(seconds.Count > 0 && sample != null)
+        messages.Add(AppendTimeframes(FormatClimaxMessage(signal, sample.C1, sample.C2, sample.C3), seconds));
+    }
+
+    static void AddRejectionMessages(List<string> messages, IList<TimeframeAnalysis> results, RejectionSignal signal)
+    {
+      var seconds = new List<int>();
+      TimeframeAnalysis sample = null;
+
+      for(int i = 0; i < results.Count; i++)
+        if(results[i].Rejection == signal)
+        {
+          seconds.Add(results[i].Seconds);
+          if(sample == null)
+            sample = results[i];
+        }
+
+      if(seconds.Count > 0 && sample != null)
+        messages.Add(AppendTimeframes(FormatRejectionMessage(signal, sample.C1, sample.C2, sample.C3), seconds));
+    }
+
+    static string AppendTimeframes(string message, IList<int> seconds)
+    {
+      if(string.IsNullOrEmpty(message))
+        return message;
+
+      return message + ". Сигнал есть на ТФ: " + FormatTimeframes(seconds);
+    }
+
+    static string FormatTimeframes(IList<int> seconds)
+    {
+      var labels = new List<string>();
+      for(int i = 0; i < seconds.Count; i++)
+        labels.Add(FormatTimeframe(seconds[i]));
+
+      return string.Join(", ", labels.ToArray());
+    }
+
+    static string FormatTimeframe(int seconds)
+    {
+      if(seconds >= 3600 && seconds % 3600 == 0)
+        return (seconds / 3600).ToString() + "ч";
+
+      if(seconds >= 60 && seconds % 60 == 0)
+        return (seconds / 60).ToString() + "м";
+
+      return seconds.ToString() + "с";
+    }
+
+    // **********************************************************************
+
+    sealed class TimeframeAnalysis
+    {
+      public int Seconds;
+      public ClusterFrame C1;
+      public ClusterFrame C2;
+      public ClusterFrame C3;
+      public Signal Absorption;
+      public ClimaxSignal Climax;
+      public RejectionSignal Rejection;
+    }
+
+    // **********************************************************************
+
+    sealed class ClusterFrame
+    {
+      public DateTime DateTime;
+      public long Volume;
+      public long BuyVolume;
+      public long SellVolume;
+      public long NeutralVolume;
+      public int OpenPrice;
+      public int ClosePrice;
+      public int MinPrice;
+      public int MaxPrice;
+
+      public long AggressiveVolume { get { return BuyVolume + SellVolume; } }
+      public long Delta { get { return BuyVolume - SellVolume; } }
+
+      public double InsideShare
+      {
+        get { return Volume > 0 ? NeutralVolume / (double)Volume : 0; }
+      }
+
+      public double AggressiveShare
+      {
+        get { return Volume > 0 ? AggressiveVolume / (double)Volume : 0; }
+      }
+
+      public double DeltaShare
+      {
+        get { return Volume > 0 ? Delta / (double)Volume : 0; }
+      }
+
+      public double AggressiveDeltaShare
+      {
+        get { return AggressiveVolume > 0 ? Delta / (double)AggressiveVolume : 0; }
+      }
+
+      readonly Dictionary<int, ClusterCell> cells = new Dictionary<int, ClusterCell>();
+
+      public static ClusterFrame FromCluster(Cluster cluster)
+      {
+        if(cluster == null || cluster.Volume == 0)
+          return null;
+
+        if(cluster.MinPrice == int.MaxValue || cluster.MaxPrice < cluster.MinPrice)
+          return null;
+
+        var frame = new ClusterFrame
+        {
+          DateTime = cluster.DateTime,
+          Volume = cluster.Volume,
+          OpenPrice = cluster.OpenPrice,
+          ClosePrice = cluster.ClosePrice,
+          MinPrice = cluster.MinPrice,
+          MaxPrice = cluster.MaxPrice
+        };
+
+        IList<ClusterPriceLevel> levels = cluster.GetPriceLevels();
+        for(int i = 0; i < levels.Count; i++)
+        {
+          ClusterPriceLevel level = levels[i];
+          if(level.Total > 0)
+            frame.AddCell(level.Price, level.AskVolume, level.BidVolume,
+              level.InsideSpreadVolume);
+        }
+
+        return frame;
+      }
+
+      public static ClusterFrame Merge(IList<ClusterFrame> frames, int start, int count)
+      {
+        if(frames == null || count <= 0 || start < 0 || start + count > frames.Count)
+          return null;
+
+        ClusterFrame first = frames[start];
+        ClusterFrame last = frames[start + count - 1];
+        if(first == null || last == null)
+          return null;
+
+        var merged = new ClusterFrame
+        {
+          DateTime = last.DateTime,
+          OpenPrice = first.OpenPrice,
+          ClosePrice = last.ClosePrice,
+          MinPrice = int.MaxValue,
+          MaxPrice = int.MinValue
+        };
+
+        for(int i = start; i < start + count; i++)
+        {
+          ClusterFrame f = frames[i];
+          if(f == null)
+            return null;
+
+          merged.Volume += f.Volume;
+
+          if(f.MinPrice < merged.MinPrice)
+            merged.MinPrice = f.MinPrice;
+
+          if(f.MaxPrice > merged.MaxPrice)
+            merged.MaxPrice = f.MaxPrice;
+
+          foreach(KeyValuePair<int, ClusterCell> kv in f.cells)
+            merged.AddCell(kv.Key, kv.Value.BuyVolume, kv.Value.SellVolume,
+              kv.Value.NeutralVolume);
+        }
+
+        return merged.Volume > 0 ? merged : null;
+      }
+
+      public long GetCellVolume(int price)
+      {
+        ClusterCell cell;
+        return cells.TryGetValue(price, out cell) ? cell.Total : 0;
+      }
+
+      public ClusterCell GetCell(int price)
+      {
+        ClusterCell cell;
+        return cells.TryGetValue(price, out cell) ? cell : new ClusterCell();
+      }
+
+      public void GetVolumeDistribution(out long volumeAbove, out long volumeBelow)
+      {
+        GetVolumeDistribution(ClosePrice, out volumeAbove, out volumeBelow);
+      }
+
+      public void GetVolumeDistribution(int referencePrice, out long volumeAbove, out long volumeBelow)
+      {
+        volumeAbove = 0;
+        volumeBelow = 0;
+
+        foreach(KeyValuePair<int, ClusterCell> kv in cells)
+        {
+          if(kv.Key > referencePrice)
+            volumeAbove += kv.Value.Total;
+          else if(kv.Key < referencePrice)
+            volumeBelow += kv.Value.Total;
+        }
+      }
+
+      void AddCell(int price, long buyVolume, long sellVolume, long neutralVolume)
+      {
+        ClusterCell current;
+        cells.TryGetValue(price, out current);
+        current.BuyVolume += buyVolume;
+        current.SellVolume += sellVolume;
+        current.NeutralVolume += neutralVolume;
+        cells[price] = current;
+
+        BuyVolume += buyVolume;
+        SellVolume += sellVolume;
+        NeutralVolume += neutralVolume;
+      }
+    }
+
+    // **********************************************************************
+
+    struct ClusterCell
+    {
+      public long BuyVolume;
+      public long SellVolume;
+      public long NeutralVolume;
+
+      public long Total
+      {
+        get { return BuyVolume + SellVolume + NeutralVolume; }
+      }
+
+      public long Delta
+      {
+        get { return BuyVolume - SellVolume; }
+      }
+
+      public double InsideShare
+      {
+        get { return Total > 0 ? NeutralVolume / (double)Total : 0; }
+      }
     }
 
     // **********************************************************************

@@ -92,6 +92,41 @@ namespace QScalp.View.ClustersSpace.Analytics
       return cnt > 0 ? sum / cnt : 0;
     }
 
+    /// <summary>
+    /// Средний объём по <paramref name="n"/> кластерам, расположенным
+    /// перед баром с заданным смещением от конца.
+    /// Пример: offset=1 — средний объём ДО предыдущего бара (trap).
+    /// Если данных недостаточно — 0.
+    /// </summary>
+    public double AverageVolumeBeforeFrom(int offsetFromEnd, int n)
+    {
+      if(offsetFromEnd < 0 || n <= 0)
+        return 0;
+
+      if(items.Count < offsetFromEnd + n + 1)
+        return 0;
+
+      double sum = 0;
+      int cnt = 0;
+
+      var node = items.Last;
+      for(int i = 0; i < offsetFromEnd && node != null; i++)
+        node = node.Previous;
+
+      if(node == null)
+        return 0;
+
+      node = node.Previous;
+      while(node != null && cnt < n)
+      {
+        sum += node.Value.Volume;
+        node = node.Previous;
+        cnt++;
+      }
+
+      return cnt > 0 ? sum / cnt : 0;
+    }
+
     // **********************************************************************
 
     /// <summary>

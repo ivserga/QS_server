@@ -14,10 +14,11 @@ namespace QScalp.View.ClustersSpace
 
     Rect rect;
 
-    int buyVolume, sellVolume;
+    int buyVolume, sellVolume, neutralVolume;
 
     public int BuyVolume { get { return buyVolume; } }
     public int SellVolume { get { return sellVolume; } }
+    public int NeutralVolume { get { return neutralVolume; } }
 
     Rect fillRect, fillRect2;
     Brush buyBrush, sellBrush;
@@ -31,6 +32,7 @@ namespace QScalp.View.ClustersSpace
 
     public void AddBuy(int volume) { buyVolume += volume; Updated = true; }
     public void AddSell(int volume) { sellVolume += volume; Updated = true; }
+    public void AddNeutral(int volume) { neutralVolume += volume; Updated = true; }
 
     // **********************************************************************
 
@@ -71,7 +73,7 @@ namespace QScalp.View.ClustersSpace
     {
       Updated = false;
 
-      int sum = buyVolume + sellVolume;
+      int sum = buyVolume + sellVolume + neutralVolume;
       int delta = buyVolume - sellVolume;
 
       using(DrawingContext dc = RenderOpen())
@@ -116,12 +118,21 @@ namespace QScalp.View.ClustersSpace
           // ----------------------------------------------
 
           case ClusterFill.SingleBalance:
-            fillRect2.Width = fillRect.Width * sellVolume / sum;
-            fillRect.Width -= fillRect2.Width;
-            fillRect2.X = fillRect.X + fillRect.Width;
+            if(sum == 0)
+              break;
 
-            dc.DrawRectangle(cfg.s.ClusterBBalanceBrush, null, fillRect);
-            dc.DrawRectangle(cfg.s.ClusterSBalanceBrush, null, fillRect2);
+            Rect buyRect = fillRect;
+            Rect sellRect = fillRect;
+
+            buyRect.Width = fillRect.Width * buyVolume / sum;
+            sellRect.Width = fillRect.Width * sellVolume / sum;
+            sellRect.X = fillRect.X + fillRect.Width - sellRect.Width;
+
+            if(buyRect.Width > 0)
+              dc.DrawRectangle(cfg.s.ClusterBBalanceBrush, null, buyRect);
+
+            if(sellRect.Width > 0)
+              dc.DrawRectangle(cfg.s.ClusterSBalanceBrush, null, sellRect);
 
             break;
 

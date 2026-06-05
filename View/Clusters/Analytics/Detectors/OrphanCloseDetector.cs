@@ -66,7 +66,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
     /// <summary>Минимальный range последнего бара (priceStep).</summary>
     public int    MinRangeTicks      { get; set; }
 
-    /// <summary>Минимальная доля |close − POC| / range. 0.45 = close в дальней четверти бара от POC.</summary>
+    /// <summary>Минимальная доля |close − COM| / range. 0.45 = close в дальней четверти бара от COM.</summary>
     public double MinGapShare        { get; set; }
 
     /// <summary>Окно для среднего объёма (для проверки ликвидности).</summary>
@@ -117,17 +117,17 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       if(range < MinRangeTicks) return null;
 
       // Gap между close и POC.
-      int gap = last.ClosePrice - last.PocPrice;
+      int gap = last.ClosePrice - last.ComPrice;
       double gapShare = Math.Abs((double)gap) / range;
       if(gapShare < MinGapShare) return null;
 
-      bool closeBelowPoc = gap < 0;
-      bool closeAbovePoc = gap > 0;
-      if(!closeBelowPoc && !closeAbovePoc) return null;
+      bool closeBelowCom = gap < 0;
+      bool closeAboveCom = gap > 0;
+      if(!closeBelowCom && !closeAboveCom) return null;
 
       // Close должен быть ВНЕ диапазона Top3From..Top3To.
       bool outsideTop3;
-      if(closeBelowPoc)
+      if(closeBelowCom)
         outsideTop3 = last.ClosePrice < last.Top3From;
       else
         outsideTop3 = last.ClosePrice > last.Top3To;
@@ -143,7 +143,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
 
       // Фитиль на стороне close: для UP-сигнала (close внизу) меньший
       // нижний фитиль = сильнее (на дне никто не торговал).
-      int wickAtClose = closeBelowPoc
+      int wickAtClose = closeBelowCom
         ? Math.Max(0, Math.Min(last.OpenPrice, last.ClosePrice) - last.MinPrice)
         : Math.Max(0, last.MaxPrice - Math.Max(last.OpenPrice, last.ClosePrice));
 
@@ -162,33 +162,33 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       lastEmittedAt = last.Source.DateTime;
       barsSinceLastEmit = 0;
 
-      var dir  = closeBelowPoc ? SignalDirection.Up : SignalDirection.Down;
-      var kind = closeBelowPoc ? SignalKind.OrphanCloseUp : SignalKind.OrphanCloseDown;
+      var dir  = closeBelowCom ? SignalDirection.Up : SignalDirection.Down;
+      var kind = closeBelowCom ? SignalKind.OrphanCloseUp : SignalKind.OrphanCloseDown;
 
       return new Signal
       {
         Time      = last.Source.DateTime,
         Kind      = kind,
         Direction = dir,
-        Price     = last.PocPrice, // ожидаемая цель возврата
+        Price     = last.ComPrice, // ожидаемая цель возврата
         Strength  = strength,
-        Message   = FormatMessage(last, gap, gapShare, closeBelowPoc),
+        Message   = FormatMessage(last, gap, gapShare, closeBelowCom),
         Details   = FormatDetails(last, gap, gapShare, wickShare, avgVol, strength)
       };
     }
 
     // **********************************************************************
 
-    static string FormatMessage(ClusterStats last, int gap, double gapShare, bool closeBelowPoc)
+    static string FormatMessage(ClusterStats last, int gap, double gapShare, bool closeBelowCom)
     {
-      string side = closeBelowPoc ? "вверх" : "вниз";
+      string side = closeBelowCom ? "вверх" : "вниз";
       int gapPct = (int)Math.Round(gapShare * 100);
 
       return string.Format(CultureInfo.InvariantCulture,
-        "Сиротское закрытие: close {0} в {1} тиках от POC {2} ({3}% диапазона) — ожидание возврата {4}",
+        "Сиротское закрытие: close {0} в {1} тиках от COM {2} ({3}% диапазона) — ожидание возврата {4}",
         last.ClosePrice,
         Math.Abs(gap),
-        last.PocPrice,
+        last.ComPrice,
         gapPct,
         side);
     }
@@ -197,13 +197,13 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
                                 double wickShare, double avgVol, double strength)
     {
       return string.Format(CultureInfo.InvariantCulture,
-        "close={0} poc={1} gap={2} gapShare={3:F2} top3=[{4}..{5}] posPoc={6:F2} range={7} wickShareAtClose={8:F2} vol={9} avgVol={10:F0} strength={11:F2}",
+        "close={0} com={1} gap={2} gapShare={3:F2} top3=[{4}..{5}] posCom={6:F2} range={7} wickShareAtClose={8:F2} vol={9} avgVol={10:F0} strength={11:F2}",
         last.ClosePrice,
-        last.PocPrice,
+        last.ComPrice,
         gap,
         gapShare,
         last.Top3From, last.Top3To,
-        last.PosPoc,
+        last.PosCom,
         last.MaxPrice - last.MinPrice,
         wickShare,
         last.Volume,

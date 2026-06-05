@@ -20,9 +20,11 @@ namespace QScalp.View.ClustersSpace
 
     public int BuyVolume { get { return body.BuyVolume; } }
     public int SellVolume { get { return body.SellVolume; } }
+    public int NeutralVolume { get { return body.NeutralVolume; } }
 
     public void AddBuy(int volume) { body.AddBuy(volume); Updated = true; }
     public void AddSell(int volume) { body.AddSell(volume); Updated = true; }
+    public void AddNeutral(int volume) { body.AddNeutral(volume); Updated = true; }
     public void SetMark(bool visible) { mark.SetState(visible); Updated = true; }
 
     // **********************************************************************

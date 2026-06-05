@@ -6,7 +6,7 @@
 //  объёма идёт бар, в котором:
 //    • объём резко упал (<= BalanceVolumeShare от предыдущего),
 //    • диапазон сжался (<= BalanceRangeShare от предыдущего),
-//    • |Delta| маленькая (рынок "замер").
+//    • рынок "замер" по объёму и диапазону.
 //
 //  Это классическое подтверждение завершения импульса и "базы" для разворота.
 //  Детектор опирается на предыдущий кластер в истории, не требуя, чтобы
@@ -33,7 +33,6 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
 
     public double BalanceVolumeShare { get; set; }
     public double BalanceRangeShare  { get; set; }
-    public double MaxDeltaShare      { get; set; }  // |Delta|/Volume
     public double ClimaxMinTop3Share { get; set; }
     public double ClimaxDensityMult  { get; set; }
     public int AverageWindow         { get; set; }
@@ -49,7 +48,6 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       Enabled = true;
       BalanceVolumeShare = 0.65;
       BalanceRangeShare  = 0.65;
-      MaxDeltaShare      = 0.15;
       ClimaxMinTop3Share = 0.35;
       ClimaxDensityMult  = 1.3;
       AverageWindow      = 5;
@@ -85,15 +83,11 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       // Текущий бар — "замирание": объём и range сжаты.
       double volRatio   = (double)curr.Volume / prev.Volume;
       double rangeRatio = (double)curr.Range / prev.Range;
-      double absDelta   = Math.Abs(curr.Delta) / (double)Math.Max(1, curr.Volume);
 
       if(volRatio > BalanceVolumeShare)
         return null;
 
       if(rangeRatio > BalanceRangeShare)
-        return null;
-
-      if(absDelta > MaxDeltaShare)
         return null;
 
       if(curr.Source.DateTime == lastEmittedAt)
@@ -104,8 +98,8 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       // Направление ожидаемого отката — по PosPoc предыдущего (climax) бара:
       //   selling climax → ожидание up, buying climax → ожидание down.
       SignalDirection dir = SignalDirection.None;
-      if(prev.PosPoc <= 0.25) dir = SignalDirection.Up;
-      else if(prev.PosPoc >= 0.75) dir = SignalDirection.Down;
+      if(prev.PosCom <= 0.25) dir = SignalDirection.Up;
+      else if(prev.PosCom >= 0.75) dir = SignalDirection.Down;
 
       double strength =
         0.5 * Math.Min(1.0, (BalanceVolumeShare - volRatio) / Math.Max(1e-6, BalanceVolumeShare)) +
@@ -117,10 +111,10 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
         Time = curr.Source.DateTime,
         Kind = SignalKind.BalanceAfterClimax,
         Direction = dir,
-        Price = prev.PocPrice,
+        Price = prev.ComPrice,
         Strength = strength,
         Message = FormatMessage(curr, prev, volRatio, rangeRatio, dir),
-        Details = FormatDetails(curr, prev, volRatio, rangeRatio, absDelta)
+        Details = FormatDetails(curr, prev, volRatio, rangeRatio)
       };
     }
 
@@ -132,8 +126,8 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       string hint;
       switch(dir)
       {
-        case SignalDirection.Up:   hint = "подтверждение отката вверх от зоны " + prev.PocPrice; break;
-        case SignalDirection.Down: hint = "подтверждение отката вниз от зоны " + prev.PocPrice; break;
+        case SignalDirection.Up:   hint = "подтверждение отката вверх от зоны " + prev.ComPrice; break;
+        case SignalDirection.Down: hint = "подтверждение отката вниз от зоны " + prev.ComPrice; break;
         default:                   hint = "подтверждение завершения импульса";                    break;
       }
 
@@ -143,12 +137,12 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
     }
 
     static string FormatDetails(ClusterStats curr, ClusterStats prev,
-      double volRatio, double rangeRatio, double absDelta)
+      double volRatio, double rangeRatio)
     {
       return string.Format(CultureInfo.InvariantCulture,
-        "prevPoc={0} prevTop3={1:F2} prevVol={2} curVol={3} volRatio={4:F2} rangeRatio={5:F2} |delta|/vol={6:F3}",
-        prev.PocPrice, prev.Top3Share, prev.Volume, curr.Volume,
-        volRatio, rangeRatio, absDelta);
+        "prevCom={0} prevTop3={1:F2} prevVol={2} curVol={3} volRatio={4:F2} rangeRatio={5:F2}",
+        prev.ComPrice, prev.Top3Share, prev.Volume, curr.Volume,
+        volRatio, rangeRatio);
     }
 
     // **********************************************************************

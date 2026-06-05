@@ -42,7 +42,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
 
     public int MinRun                 { get; set; } // подряд противоположных баров до разворота
     public double AbsorptionEdge      { get; set; } // PosPoc порог у низа/верха
-    public double AbsorptionPocShare  { get; set; } // мин. доля POC в предыдущем баре
+    public double AbsorptionTop3Share  { get; set; } // мин. доля POC в предыдущем баре
     public double MinBodyRatio        { get; set; } // (close-open)/range разворотного бара
     public double MinCenterOfMassShift{ get; set; } // сдвиг CoM относительно range, 0..1
 
@@ -57,7 +57,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       Enabled = true;
       MinRun = 2;
       AbsorptionEdge = 0.35;
-      AbsorptionPocShare = 0.05;
+      AbsorptionTop3Share = 0.05;
       MinBodyRatio = 0.35;
       MinCenterOfMassShift = 0.15;
     }
@@ -105,14 +105,14 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
 
       if(bearishRun)
       {
-        if(prev.PosPoc > absorptionEdgeLow) return null;
+        if(prev.PosCom > absorptionEdgeLow) return null;
       }
       else
       {
-        if(prev.PosPoc < absorptionEdgeHigh) return null;
+        if(prev.PosCom < absorptionEdgeHigh) return null;
       }
 
-      if(prev.PocShare < AbsorptionPocShare)
+      if(prev.Top3Share < AbsorptionTop3Share)
         return null;
 
       // Разворотный бар: знак тела и нарушение экстремума.
@@ -146,8 +146,8 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       double runScore  = Math.Min(1.0, (run - MinRun + 1) / 3.0);
       double bodyScore = Math.Min(1.0, (bodyRatio - MinBodyRatio) / Math.Max(1e-6, 1.0 - MinBodyRatio));
       double edgeScore = bearishRun
-        ? Math.Min(1.0, (absorptionEdgeLow - prev.PosPoc) / Math.Max(1e-6, absorptionEdgeLow))
-        : Math.Min(1.0, (prev.PosPoc - absorptionEdgeHigh) / Math.Max(1e-6, 1.0 - absorptionEdgeHigh));
+        ? Math.Min(1.0, (absorptionEdgeLow - prev.PosCom) / Math.Max(1e-6, absorptionEdgeLow))
+        : Math.Min(1.0, (prev.PosCom - absorptionEdgeHigh) / Math.Max(1e-6, 1.0 - absorptionEdgeHigh));
 
       double strength = 0.35 * runScore + 0.35 * bodyScore + 0.30 * Math.Max(0, edgeScore);
 
@@ -156,7 +156,7 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
         Time = curr.Source.DateTime,
         Kind = bearishRun ? SignalKind.VReversalUp : SignalKind.VReversalDown,
         Direction = bearishRun ? SignalDirection.Up : SignalDirection.Down,
-        Price = prev.PocPrice,
+        Price = prev.ComPrice,
         Strength = strength,
         Message = FormatMessage(curr, prev, bearishRun, run, bodyRatio),
         Details = FormatDetails(curr, prev, bearishRun, run, bodyRatio, shiftNorm)
@@ -185,24 +185,24 @@ namespace QScalp.View.ClustersSpace.Analytics.Detectors
       {
         return string.Format(CultureInfo.InvariantCulture,
           "V-разворот вверх: {0} медвежьих, абсорбция у {1}, разворот с телом {2}% диапазона, close {3}",
-          run, prev.PocPrice, (int)Math.Round(bodyRatio * 100), curr.ClosePrice);
+          run, prev.ComPrice, (int)Math.Round(bodyRatio * 100), curr.ClosePrice);
       }
 
       return string.Format(CultureInfo.InvariantCulture,
         "^-разворот вниз: {0} бычьих, абсорбция у {1}, разворот с телом {2}% диапазона, close {3}",
-        run, prev.PocPrice, (int)Math.Round(bodyRatio * 100), curr.ClosePrice);
+        run, prev.ComPrice, (int)Math.Round(bodyRatio * 100), curr.ClosePrice);
     }
 
     static string FormatDetails(ClusterStats curr, ClusterStats prev,
       bool bearishRun, int run, double bodyRatio, double shiftNorm)
     {
       return string.Format(CultureInfo.InvariantCulture,
-        "run={0} dir={1} prevPoc={2} prevPosPoc={3:F2} prevPocShare={4:F2} body={5:F2} comShift={6:F2} close={7}",
+        "run={0} dir={1} prevCom={2} prevPosCom={3:F2} prevComShare={4:F2} body={5:F2} comShift={6:F2} close={7}",
         run,
         bearishRun ? "bearish->up" : "bullish->down",
-        prev.PocPrice,
-        prev.PosPoc,
-        prev.PocShare,
+        prev.ComPrice,
+        prev.PosCom,
+        prev.Top3Share,
         bodyRatio,
         shiftNorm,
         curr.ClosePrice);
