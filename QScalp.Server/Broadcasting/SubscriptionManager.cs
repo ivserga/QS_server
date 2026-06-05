@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Newtonsoft.Json;
+using QScalp.Server.Config;
 using QScalp.Server.Connector;
 using QScalp.Shared.Models;
 using QScalp.Shared.Protocol;
@@ -14,13 +15,14 @@ namespace QScalp.Server.Broadcasting
 {
     /// <summary>
     /// Управляет подписками клиентов на тикеры.
-    /// Динамически подписывается/отписывается на massive.com.
+    /// Динамически подписывается/отписывается у источника данных (Massive / Striker).
     /// Хранит буфер данных (снапшот) для каждого тикера.
     /// </summary>
     public class SubscriptionManager
     {
-        private readonly MassiveConnector _connector;
+        private readonly IMarketDataConnector _connector;
         private readonly ClientManager _clientManager;
+        private readonly ServerConfig _config;
         private readonly Action<string> _log;
 
         // Буфер последних данных по тикеру (для снапшота новых клиентов)
@@ -44,12 +46,14 @@ namespace QScalp.Server.Broadcasting
         // ********************************************************************
 
         public SubscriptionManager(
-            MassiveConnector connector,
+            IMarketDataConnector connector,
             ClientManager clientManager,
+            ServerConfig config,
             Action<string> log)
         {
             _connector = connector;
             _clientManager = clientManager;
+            _config = config;
             _log = log;
 
             _connector.OnQuoteReceived += HandleQuote;
@@ -107,29 +111,135 @@ namespace QScalp.Server.Broadcasting
             client.CurrentTicker = ticker;
             _log($"Клиент {client.Id} подписался на {ticker}");
 
-            // Создать буфер если первая подписка на этот тикер
+            // Создать буфер, если это первая подписка на этот тикер
             if (!_buffers.ContainsKey(ticker))
             {
                 _buffers[ticker] = new TickerBuffer(ticker, secKey);
 
-                // Подписаться на massive.com
+                // Подписка у источника (WS Massive или polling Striker).
                 await _connector.SubscribeTickerAsync(ticker);
-                _log($"Подписка на massive.com: {ticker}");
+                _log($"Подписка на {_connector.SourceName}: {ticker}");
 
-                // Загрузить снапшот
-                _log($"Загрузка снапшота для {ticker}...");
-                await _connector.LoadSnapshotAsync(ticker, _buffers[ticker]);
-                _log($"Снапшот {ticker} загружен");
+                // Тяжёлая REST-загрузка истории дёргается ТОЛЬКО если в конфиге
+                // явно включён LoadSnapshotFromApi. По умолчанию выключено,
+                // т. к. это ресурсоёмко по сети.
+                if (_config != null && _config.LoadSnapshotFromApi)
+                {
+                    _log($"Загрузка снапшота для {ticker} (REST API)...");
+                    await _connector.LoadSnapshotAsync(ticker, _buffers[ticker]);
+                    _log($"Снапшот {ticker} загружен");
+                }
+                else
+                {
+                    _log($"Авто-загрузка снапшота для {ticker} отключена " +
+                         $"(ServerConfig.LoadSnapshotFromApi=false).");
+                }
             }
 
-            // Отправить снапшот клиенту
-            var buf = _buffers[ticker];
+            // Отправлять снапшот клиенту автоматически — тоже под флагом.
+            // По умолчанию — нет: клиент получает только live-стрим, что
+            // существенно экономит трафик.
+            if (_config != null && _config.AutoSnapshotOnSubscribe)
+            {
+                await SendSnapshotAsync(client, ticker);
+            }
+
+            _clientManager.NotifyUI();
+        }
+
+        // ********************************************************************
+
+        /// <summary>
+        /// Отправляет клиенту накопленный снапшот по запросу. Если в конфиге
+        /// разрешено (LoadSnapshotOnDemand &amp;&amp; LoadSnapshotFromApi) —
+        /// перед отправкой делает REST-дозагрузку из API.
+        /// </summary>
+        public async Task SendSnapshotOnDemandAsync(ClientSession client)
+        {
+            var ticker = client.CurrentTicker;
+            if (string.IsNullOrEmpty(ticker)) return;
+
+            if (_config != null && !_config.LoadSnapshotOnDemand)
+            {
+                _log($"RequestSnapshot от {client.Id} отклонён: " +
+                     "ServerConfig.LoadSnapshotOnDemand=false.");
+                return;
+            }
+
+            if (!_buffers.TryGetValue(ticker, out var buf))
+            {
+                _log($"RequestSnapshot от {client.Id} проигнорирован: " +
+                     $"буфер тикера {ticker} ещё не создан.");
+                return;
+            }
+
+            // Опциональная дозагрузка истории по REST — только если оба флага
+            // включены: клиент явно попросил, и админ сервера разрешил.
+            if (_config != null && _config.LoadSnapshotFromApi)
+            {
+                try
+                {
+                    _log($"REST-дозагрузка снапшота для {ticker} по запросу клиента {client.Id}...");
+                    await _connector.LoadSnapshotAsync(ticker, buf);
+                }
+                catch (Exception ex)
+                {
+                    _log($"Ошибка REST-дозагрузки {ticker}: {ex.Message}");
+                }
+            }
+
+            await SendSnapshotAsync(client, ticker);
+        }
+
+        public async Task FillTradeTicketAsync(ClientSession client, ClientCommand cmd)
+        {
+            if (!( _connector is ITradeTicketConnector tradeTicketConnector))
+            {
+                _log($"FillTradeTicket от {client.Id} отклонён: источник {_connector.SourceName} не поддерживает Trade Ticket.");
+                return;
+            }
+
+            var ticker = string.IsNullOrWhiteSpace(cmd.Ticker)
+                ? client.CurrentTicker
+                : cmd.Ticker.Trim().ToUpperInvariant();
+
+            if (string.IsNullOrWhiteSpace(ticker))
+            {
+                _log($"FillTradeTicket от {client.Id} отклонён: тикер не задан.");
+                return;
+            }
+
+            if (cmd.Quantity <= 0)
+            {
+                _log($"FillTradeTicket {ticker} от {client.Id} отклонён: quantity={cmd.Quantity}.");
+                return;
+            }
+
+            try
+            {
+                await tradeTicketConnector.FillTradeTicketAsync(
+                    ticker,
+                    cmd.Side,
+                    cmd.Quantity,
+                    cmd.SignalStrength,
+                    cmd.SignalMessage);
+            }
+            catch (Exception ex)
+            {
+                _log($"FillTradeTicket {ticker} ошибка: {ex.Message}");
+            }
+        }
+
+        // ********************************************************************
+
+        private async Task SendSnapshotAsync(ClientSession client, string ticker)
+        {
+            if (!_buffers.TryGetValue(ticker, out var buf)) return;
+
             var snapshot = buf.GetSnapshot();
             var msg = ProtocolHelper.CreateMessage(
                 ServerMessageType.Snapshot, ticker, snapshot);
             await client.SendAsync(ProtocolHelper.Serialize(msg));
-
-            _clientManager.NotifyUI();
         }
 
         // ********************************************************************
@@ -141,12 +251,12 @@ namespace QScalp.Server.Broadcasting
 
             client.CurrentTicker = null;
 
-            // Если больше нет подписчиков — отписаться от massive.com
+            // Если больше нет подписчиков — отписаться у источника
             if (!_clientManager.HasOtherSubscribers(ticker, client.Id))
             {
                 await _connector.UnsubscribeTickerAsync(ticker);
                 _buffers.TryRemove(ticker, out _);
-                _log($"Отписка от massive.com: {ticker} (нет подписчиков)");
+                _log($"Отписка от {_connector.SourceName}: {ticker} (нет подписчиков)");
             }
 
             _clientManager.NotifyUI();

@@ -6,7 +6,8 @@ namespace QScalp.Shared.Protocol
     {
         Subscribe,
         Unsubscribe,
-        RequestSnapshot
+        RequestSnapshot,
+        FillTradeTicket
     }
 
     /// <summary>
@@ -22,5 +23,21 @@ namespace QScalp.Shared.Protocol
 
         [JsonProperty("secKey")]
         public string SecKey { get; set; }
+
+        /// <summary>Buy/Sell для заполнения Trade Ticket.</summary>
+        [JsonProperty("side")]
+        public string Side { get; set; }
+
+        /// <summary>Количество акций для Trade Ticket.</summary>
+        [JsonProperty("quantity")]
+        public int Quantity { get; set; }
+
+        /// <summary>Сила сигнала, по которому был создан тикет (для лога).</summary>
+        [JsonProperty("signalStrength")]
+        public double SignalStrength { get; set; }
+
+        /// <summary>Описание сигнала, по которому был создан тикет (для лога).</summary>
+        [JsonProperty("signalMessage")]
+        public string SignalMessage { get; set; }
     }
 }

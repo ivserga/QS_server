@@ -15,8 +15,10 @@ namespace QScalp.Server.Connector
     /// Подключение к massive.com: одно WS-соединение, динамические подписки на тикеры.
     /// Принимает сырые данные от massive.com и транслирует в формате Shared моделей.
     /// </summary>
-    public class MassiveConnector : IDisposable
+    public class MassiveConnector : IMarketDataConnector
     {
+        public string SourceName => "massive.com";
+
         private readonly MassiveWebSocketClient _wsClient;
         private readonly ApiClient _apiClient;
         private readonly Action<string> _log;
@@ -203,12 +205,19 @@ namespace QScalp.Server.Connector
 
         private Trade? ConvertTrade(string ticker, string secKey, TradeResult tr)
         {
+            var op = TradeOp.Wait;
+            if (_lastSpreads.TryGetValue(ticker, out var sp))
+            {
+                if (tr.Price >= sp.RawAsk) op = TradeOp.Buy;
+                else if (tr.Price <= sp.RawBid) op = TradeOp.Sell;
+            }
+
             return new Trade
             {
                 RawPrice = tr.Price,
                 IntPrice = RawToTransport(tr.Price),
                 Quantity = (int)tr.Size,
-                Op = TradeOp.Buy,
+                Op = op,
                 DateTime = DateTimeOffset
                     .FromUnixTimeMilliseconds(tr.SipTimestamp / 1_000_000)
                     .DateTime
