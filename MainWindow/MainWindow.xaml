@@ -49,6 +49,11 @@
             <StatusBarItem Grid.Column="2" Style="{StaticResource Indicator}" x:Name="quikStatus" Margin="5,0" />
 
             <StatusBarItem Grid.Column="3" Padding="0">
+                <StackPanel Orientation="Horizontal">
+                <Button Content="AI экспорт" Padding="6,1" Margin="0,0,4,0"
+                        Focusable="False" IsTabStop="False"
+                        ToolTip="Выгрузить кластеры за выбранный период в JSON для нейросети"
+                        Click="ExportClustersButton_Click" />
                 <Menu Background="{x:Null}" IsMainMenu="False">
                     <MenuItem Header="меню" BorderBrush="#FFD9D9D9" BorderThickness="1" Name="menu" Style="{x:Null}">
                         <MenuItem Header="О программе" Click="MenuAbout_Click" />
@@ -61,6 +66,7 @@
                         <MenuItem Name="menuTradeLog" Header="Показывать журнал" IsCheckable="True" Click="MenuTradeLog_Click" />
                         <Separator/>
                         <MenuItem Name="menuEmulation" Header="Эмуляция терминала" IsCheckable="True" Click="MenuEmulation_Click" />
+                        <MenuItem Name="menuLlmAnalysis" Header="AI-анализ кластеров" IsCheckable="True" Click="MenuLlmAnalysis_Click" />
                         <Separator/>
                         <MenuItem Header="Очистить">
                             <MenuItem Name="menuDropPos" Header="Позицию" Click="MenuDropPos_Click" />
@@ -71,6 +77,7 @@
                         <MenuItem Name="menuExit" Header="Выход" Click="MenuExit_Click" />
                     </MenuItem>
                 </Menu>
+                </StackPanel>
             </StatusBarItem>
 
             <StatusBarItem Grid.Column="4" HorizontalAlignment="Center" ToolTip="Автоцентровка спреда">

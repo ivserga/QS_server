@@ -82,6 +82,10 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>$(USERPROFILE)\.nuget\packages\newtonsoft.json\13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="NDde">
       <HintPath>NDde\Binary\NDde.dll</HintPath>
     </Reference>
@@ -142,6 +146,7 @@
     <Compile Include="Windows\Config\TabOther.cs" />
     <Compile Include="Windows\Config\TabPosition.cs" />
     <Compile Include="Windows\Config\TabTone.cs" />
+    <Compile Include="Windows\ClusterExportPeriodWindow.cs" />
     <Compile Include="Windows\Controls\KeyBox.cs" />
     <Compile Include="Windows\Controls\NumStepBox.cs" />
     <Compile Include="Windows\Controls\NumUpDown.cs" />
@@ -191,6 +196,11 @@
     <Compile Include="View\ViewManager.cs" />
     <Compile Include="View\Clusters\Cluster.cs" />
     <Compile Include="View\Clusters\CCell.cs" />
+    <Compile Include="View\Clusters\ClusterExporter.cs" />
+    <Compile Include="View\Clusters\ClusterPriceLevel.cs" />
+    <Compile Include="View\Clusters\Llm\DeepSeekChatClient.cs" />
+    <Compile Include="View\Clusters\Llm\ClusterSnapshot.cs" />
+    <Compile Include="View\Clusters\Llm\ClusterLlmSession.cs" />
     <Compile Include="View\Clusters\Legend.cs" />
     <Compile Include="View\Clusters\ClusterAnalyzer.cs" />
     <Compile Include="View\Clusters\SoundAlert.cs" />
@@ -208,9 +218,12 @@
     <Compile Include="View\Clusters\Analytics\Detectors\DistributionDetector.cs" />
     <Compile Include="View\Clusters\Analytics\Detectors\DoubleBottomDetector.cs" />
     <Compile Include="View\Clusters\Analytics\Detectors\DoubleTopDetector.cs" />
+    <Compile Include="View\Clusters\Analytics\Detectors\FalseBreakReclaimDetector.cs" />
+    <Compile Include="View\Clusters\Analytics\Detectors\FalseBreakReclaimDownDetector.cs" />
+    <Compile Include="View\Clusters\Analytics\Detectors\TrendContinuationDetector.cs" />
+    <Compile Include="View\Clusters\Analytics\Detectors\FlushDetector.cs" />
     <Compile Include="View\Clusters\Analytics\Detectors\HvnRejectDetector.cs" />
     <Compile Include="View\Clusters\Analytics\Detectors\OrphanCloseDetector.cs" />
-    <Compile Include="View\Clusters\Analytics\Detectors\PocMigrationDetector.cs" />
     <Compile Include="View\Clusters\Analytics\Detectors\VReversalDetector.cs" />
     <Compile Include="View\Clusters\Analytics\WindowMath.cs" />
     <Compile Include="View\Clusters\Analytics\Sinks\MessengerSink.cs" />
@@ -271,9 +284,7 @@
     <Resource Include="QScalp.ico" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json">
-      <Version>13.0.3</Version>
-    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0,Profile=Client">

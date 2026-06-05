@@ -38,6 +38,23 @@ namespace QScalp.View
 
     // **********************************************************************
 
+    public bool TryGetClusterPeriod(out DateTime from, out DateTime to)
+    {
+      return eClusters.TryGetClusterPeriod(out from, out to);
+    }
+
+    public int CountClustersForExport(DateTime from, DateTime to)
+    {
+      return eClusters.CountClustersForExport(from, to);
+    }
+
+    public int ExportClustersForAi(DateTime from, DateTime to, string fileName)
+    {
+      return eClusters.ExportClustersForAi(from, to, fileName);
+    }
+
+    // **********************************************************************
+
     public ScalpView()
     {
       vmgr = new ViewManager(this);
@@ -388,6 +405,12 @@ namespace QScalp.View
     /// Полностью очищает кластеры (для перезагрузки данных за другую дату)
     /// </summary>
     public void ClearClusters() { eClusters.Clear(); }
+
+    /// <summary>
+    /// Освобождает LLM-сессию (HttpClient и фоновые задачи). Вызывать при
+    /// закрытии главного окна.
+    /// </summary>
+    public void ShutdownLlm() { eClusters.ShutdownLlm(); }
 
     /// <summary>
     /// Очищает котировки стакана

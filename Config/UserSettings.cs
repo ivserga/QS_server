@@ -144,6 +144,12 @@ namespace QScalp
     public bool ClusterAlertClimax = true;
     public bool ClusterAlertRejection = true;
 
+    // ---- Legacy ClusterAnalyzer (3-кластерное поглощение) ----
+    /// <summary>Доля объёма c3 выше/ниже ref для Bearish/BullishDivergence.</summary>
+    public double LegacyAbsorptionVolumeRatioThreshold = 0.68;
+    /// <summary>Объём c3 ≥ c2.Volume * множитель (и c3 &gt; c1).</summary>
+    public double LegacyAbsorptionVolumeMultiplier = 1.35;
+
     // **********************************************************************
     // *                           Сигналы / Detectors                      *
     // **********************************************************************
@@ -159,7 +165,7 @@ namespace QScalp
 
     // ---- AbsorptionDetector (абсорбция на границе бара) ----
     public bool   AbsorptionEnabled          = true;
-    public double AbsorptionMinPocShare      = 0.30;
+    public double AbsorptionMinTop3Share     = 0.30;
     public double AbsorptionEdgeThreshold    = 0.85;
     public double AbsorptionTailMaxShare     = 0.05;
     public double AbsorptionVolumeMultiplier = 1.4;
@@ -170,8 +176,8 @@ namespace QScalp
     public double ClimaxMinTop3Share          = 0.40;
     public double ClimaxVolumeMultiplier      = 0.8;
     public double ClimaxMinDensityMultiplier  = 1.3;
-    public double ClimaxEdgePosPocTop         = 0.75;
-    public double ClimaxEdgePosPocBottom      = 0.25;
+    public double ClimaxEdgePosComTop         = 0.75;
+    public double ClimaxEdgePosComBottom      = 0.25;
     public int    ClimaxAverageWindow         = 5;
     public int    ClimaxCooldownBars          = 3;
 
@@ -188,37 +194,9 @@ namespace QScalp
     public bool   VReversalEnabled                = true;
     public int    VReversalMinRun                 = 2;
     public double VReversalAbsorptionEdge         = 0.35;
-    public double VReversalAbsorptionPocShare     = 0.05;
+    public double VReversalAbsorptionTop3Share    = 0.05;
     public double VReversalMinBodyRatio           = 0.35;
     public double VReversalMinCenterOfMassShift   = 0.15;
-
-    // ---- PocMigrationDetector (миграция POC = продолжение тренда) ----
-    public bool   PocMigrationEnabled             = true;
-    public int    PocMigrationMinShiftTicks       = 4;
-    public double PocMigrationVolumeMinRatio      = 0.8;
-    public int    PocMigrationAverageWindow       = 5;
-    public int    PocMigrationCooldownBars        = 2;
-    /// <summary>
-    /// Подтверждение через сглаженный центр (PocPrice + CenterOfMass +
-    /// midpoint(Top3))/3. Сдвиг центра должен быть ≥ MinShiftTicks * Ratio,
-    /// иначе сигнал отбраковывается как «дрожание POC». 0 = выключить.
-    /// </summary>
-    public double PocMigrationSmoothConfirmRatio  = 0.5;
-    /// <summary>
-    /// Объединённый скор подтверждения направления на эмиттирующем баре:
-    /// (PosPoc + ClosePosInBar) / 2 для up, симметрично для down. Отсекает
-    /// ловушки, где POCs формально мигрируют, но сам бар их не подтверждает
-    /// (POC и close оба в неправильной половине бара). 0 = выключить.
-    /// </summary>
-    public double PocMigrationMinDirectionalConfirm = 0.45;
-    /// <summary>
-    /// Допуск отклонения close от POC «в неправильную сторону», в тиках.
-    /// Up блокируется, если close < POC − tolerance; down — если close >
-    /// POC + tolerance. Малые отклонения (≤8 тиков) — норма (POC сидит на
-    /// границе бара). Большие (≈30+) — failed breakout above/below value.
-    /// 0 = выключить.
-    /// </summary>
-    public int    PocMigrationCloseRelativePocTolTicks = 10;
 
     // ---- HvnRejectDetector (отскок от High Volume Node) ----
     public bool   HvnRejectEnabled                = true;
@@ -235,8 +213,8 @@ namespace QScalp
     public double DistributionMaxVolumeSlope      = -0.03;
     public int    DistributionMinHighAgeBars      = 2;
     public bool   DistributionUseClusterUplift    = true;
-    public double DistributionPosPocLowThreshold  = 0.40;
-    public double DistributionMinShareLowPosPoc   = 0.45;
+    public double DistributionPosComLowThreshold  = 0.40;
+    public double DistributionMinShareLowPosCom   = 0.45;
     public double DistributionMinStrength         = 0.50;
     public int    DistributionCooldownBars        = 5;
 
@@ -247,8 +225,8 @@ namespace QScalp
     public double AccumulationMinVolumeSlope      = 0.00;
     public int    AccumulationMinLowAgeBars       = 2;
     public bool   AccumulationUseClusterUplift    = true;
-    public double AccumulationPosPocHighThreshold = 0.60;
-    public double AccumulationMinShareHighPosPoc  = 0.45;
+    public double AccumulationPosComHighThreshold = 0.60;
+    public double AccumulationMinShareHighPosCom  = 0.45;
     public double AccumulationMinStrength         = 0.50;
     public int    AccumulationCooldownBars        = 5;
 
@@ -259,7 +237,7 @@ namespace QScalp
     public double BreakoutMinBodyRatio         = 0.45;
     public double BreakoutMinVolumeRatio       = 1.00;
     public bool   BreakoutUseClusterUplift     = true;
-    public double BreakoutPosPocFavorable      = 0.60;
+    public double BreakoutPosComFavorable      = 0.60;
     public double BreakoutMaxTop3Share         = 0.55;
     public double BreakoutMinStrength          = 0.50;
     public int    BreakoutCooldownBars         = 3;
@@ -276,8 +254,8 @@ namespace QScalp
     public int    DoubleTopMinPostPeakDropTicks     = 3;
     public bool   DoubleTopUseClusterUplift         = true;
     public double DoubleTopMaxVolumeRatio           = 1.10;
-    /// <summary>Допуск (в priceStep) для сравнения PocCenter двух пиков. 0.5 = полтика.</summary>
-    public double DoubleTopPocCenterTolTicks        = 0.5;
+    /// <summary>Допуск (в priceStep) для сравнения VolumeCenter двух пиков. 0.5 = полтика.</summary>
+    public double DoubleTopVolumeCenterTolTicks     = 0.5;
     public double DoubleTopMinStrength              = 0.50;
     public int    DoubleTopCooldownBars             = 8;
 
@@ -293,18 +271,95 @@ namespace QScalp
     public int    DoubleBottomMinPostTroughRiseTicks   = 3;
     public bool   DoubleBottomUseClusterUplift         = true;
     public double DoubleBottomMaxVolumeRatio           = 1.10;
-    /// <summary>Допуск (в priceStep) для сравнения PocCenter двух дон. 0.5 = полтика.</summary>
-    public double DoubleBottomPocCenterTolTicks        = 0.5;
+    /// <summary>Допуск (в priceStep) для сравнения VolumeCenter двух дон. 0.5 = полтика.</summary>
+    public double DoubleBottomVolumeCenterTolTicks     = 0.5;
     public double DoubleBottomMinStrength              = 0.50;
     public int    DoubleBottomCooldownBars             = 8;
 
-    // ---- OrphanCloseDetector (close улетел далеко от POC = «сиротское» закрытие) ----
+    // ---- FalseBreakReclaimDetector (ложный пробой вниз + возврат выше уровня) ----
+    public bool   FalseBreakReclaimEnabled             = true;
+    /// <summary>Окно поиска уровня (high) до двух последних баров: trap + reclaim.</summary>
+    public int    FalseBreakReclaimLookbackBars        = 12;
+    /// <summary>Допуск «близости к уровню» в тиках для подсчёта проторговки.</summary>
+    public int    FalseBreakReclaimNearLevelTicks      = 4;
+    /// <summary>Минимум подходов к уровню в lookback-окне перед ложным пробоем.</summary>
+    public int    FalseBreakReclaimMinNearTouches      = 2;
+    /// <summary>Минимальная глубина ложного выноса ниже уровня, в тиках.</summary>
+    public int    FalseBreakReclaimMinFalseBreakTicks  = 2;
+    /// <summary>Минимальный объём trap-бара относительно среднего (x avgVol).</summary>
+    public double FalseBreakReclaimTrapVolumeRatio     = 1.00;
+    /// <summary>Максимум баров между trap (ложным выносом) и reclaim-баром.</summary>
+    public int    FalseBreakReclaimMaxBarsAfterTrap    = 5;
+    /// <summary>На сколько close reclaim-бара должен быть выше уровня, в тиках.</summary>
+    public int    FalseBreakReclaimReclaimBreakTicks   = 1;
+    /// <summary>Минимальный объём reclaim-бара относительно среднего (x avgVol).</summary>
+    public double FalseBreakReclaimReclaimVolumeRatio  = 0.90;
+    /// <summary>Минимальный bodyRatio reclaim-бара: |close-open|/range.</summary>
+    public double FalseBreakReclaimMinBodyRatio        = 0.35;
+    /// <summary>Минимальный PosCom на reclaim-баре (подтверждение покупок у верха).</summary>
+    public double FalseBreakReclaimPosComMin           = 0.55;
+    /// <summary>Максимальная Top3Share на reclaim-баре (отсев слишком «тонкого» выноса).</summary>
+    public double FalseBreakReclaimMaxTop3Share        = 0.55;
+    public double FalseBreakReclaimMinStrength         = 0.50;
+    public int    FalseBreakReclaimCooldownBars        = 4;
+
+    // ---- FalseBreakReclaimDownDetector (ложный пробой вверх + возврат ниже уровня) ----
+    public bool   FalseBreakReclaimDownEnabled             = true;
+    public int    FalseBreakReclaimDownLookbackBars        = 12;
+    public int    FalseBreakReclaimDownNearLevelTicks      = 4;
+    public int    FalseBreakReclaimDownMinNearTouches      = 3;
+    public int    FalseBreakReclaimDownMinFalseBreakTicks  = 3;
+    public double FalseBreakReclaimDownTrapVolumeRatio     = 1.05;
+    public int    FalseBreakReclaimDownMaxBarsAfterTrap    = 4;
+    public int    FalseBreakReclaimDownReclaimBreakTicks   = 2;
+    public double FalseBreakReclaimDownReclaimVolumeRatio  = 0.95;
+    public double FalseBreakReclaimDownMinBodyRatio        = 0.40;
+    /// <summary>Макс. PosCom на reclaim-баре (продавцы у низа).</summary>
+    public double FalseBreakReclaimDownPosComMax           = 0.42;
+    public double FalseBreakReclaimDownMaxTop3Share        = 0.50;
+    public double FalseBreakReclaimDownMinStrength         = 0.52;
+    public int    FalseBreakReclaimDownCooldownBars        = 6;
+
+    // ---- TrendContinuationDetector (продолжение тренда по COM/хвостам, без POC/VA) ----
+    public bool   TrendContinuationEnabled         = true;
+    public int    TrendContinuationLookback        = 8;
+    public double TrendContinuationMinTrendSlopePct = 0.00005;
+    public double TrendContinuationMinNetMovePct = 0.00035;
+    public double TrendContinuationMinAlignedBodyShare = 0.38;
+    public double TrendContinuationPosComFavorable = 0.46;
+    public double TrendContinuationMinCloseAtExtreme = 0.30;
+    public double TrendContinuationMaxCounterTailShare = 0.42;
+    public double TrendContinuationMinQuarterShare = 0.08;
+    public double TrendContinuationMaxTop3Share    = 0.58;
+    public double TrendContinuationMinVolumeRatio  = 0.65;
+    public double TrendContinuationMinStrength     = 0.40;
+    public int    TrendContinuationCooldownBars    = 1;
+    public int    TrendContinuationDeferBreakoutTicks = 0;
+
+    // ---- FlushDetector (импульсный пролив/вынос одним баром, без POC/VA) ----
+    public bool   FlushEnabled              = true;
+    public int    FlushAverageWindow        = 5;
+    public int    FlushMinRangeTicks         = 8;
+    public int    FlushMinFlushTicks        = 14;
+    public double FlushMinBodyRatio         = 0.70;
+    public double FlushMinCloseAtExtreme     = 0.80;
+    public double FlushMinVolumeRatio       = 1.55;
+    public double FlushMinDensityMultiplier = 1.20;
+    public double FlushMaxPosComDown        = 0.50;
+    public double FlushMinPosComUp          = 0.61;
+    public double FlushMaxCounterTailShare  = 0.49;
+    public double FlushMaxTop3Share         = 0.68;
+    public double FlushMinQuarterShare      = 0.0;
+    public double FlushMinStrength          = 0.62;
+    public int    FlushCooldownBars         = 14;
+
+    // ---- OrphanCloseDetector (close далеко от COM = «сиротское» закрытие) ----
     // Отключён по умолчанию: на практике даёт слишком много срабатываний.
     // Класс детектора и параметры оставлены — можно включить вручную.
     public bool   OrphanCloseEnabled         = false;
     /// <summary>Минимальный range последнего бара (в priceStep). Отсев мелких баров.</summary>
     public int    OrphanCloseMinRangeTicks   = 10;
-    /// <summary>Минимальная доля |close-POC|/range. 0.45 = close в дальней четверти от POC.</summary>
+    /// <summary>Минимальная доля |close-COM|/range. 0.45 = close в дальней четверти от COM.</summary>
     public double OrphanCloseMinGapShare     = 0.45;
     /// <summary>Окно для среднего объёма (для проверки ликвидности бара).</summary>
     public int    OrphanCloseAverageWindow   = 10;
@@ -312,6 +367,48 @@ namespace QScalp
     public double OrphanCloseMinVolumeRatio  = 0.80;
     public double OrphanCloseMinStrength     = 0.50;
     public int    OrphanCloseCooldownBars    = 3;
+
+    // **********************************************************************
+    // *                       LLM / DeepSeek анализ                       *
+    // **********************************************************************
+    // Потоковый анализ каждого закрытого кластера через OpenAI-compatible API.
+    // См. View/Clusters/Llm/ClusterLlmSession.cs.
+
+    /// <summary>Главный переключатель потокового LLM-анализа.</summary>
+    public bool   LlmAnalysisEnabled          = false;
+
+    /// <summary>API-ключ (Bearer). Хранится в XML-конфиге пользователя.</summary>
+    public string LlmApiKey                   = "";
+
+    /// <summary>Base URL API. По умолчанию DeepSeek. Любой OpenAI-compatible.</summary>
+    public string LlmApiBaseUrl               = "https://api.deepseek.com";
+
+    /// <summary>Имя модели (deepseek-chat, deepseek-reasoner, gpt-4o-mini, ...).</summary>
+    public string LlmModel                    = "deepseek-chat";
+
+    /// <summary>Шаблон system-промпта. {ticker} подставляется автоматически.</summary>
+    public string LlmSystemPrompt             = "";
+
+    /// <summary>Минимальный интервал между запросами, сек. Защищает от частых баров.</summary>
+    public int    LlmMinIntervalSeconds       = 30;
+
+    /// <summary>Сколько пар user/assistant оставлять без сжатия при pruning.</summary>
+    public int    LlmKeepRecentBars           = 15;
+
+    /// <summary>Жёсткий лимит контекста, в токенах (оценка ~3.5 chars/token).</summary>
+    public int    LlmMaxContextTokens         = 12000;
+
+    /// <summary>Температура сэмплинга (0.0 - 1.0). Низкая = предсказуемость.</summary>
+    public double LlmTemperature              = 0.3;
+
+    /// <summary>Писать ответы в экранный Messenger.</summary>
+    public bool   LlmShowInMessenger          = true;
+
+    /// <summary>Дополнительный лог в llm_analysis.log рядом с signals.csv.</summary>
+    public bool   LlmLogToFile                = false;
+
+    /// <summary>Таймаут HttpClient, сек. DeepSeek иногда отвечает 30-60 с.</summary>
+    public int    LlmHttpClientTimeoutSeconds = 90;
 
     // **********************************************************************
     // *                              Управление                            *
