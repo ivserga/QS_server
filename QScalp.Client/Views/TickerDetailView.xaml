@@ -1,0 +1,582 @@
+<UserControl x:Class="QScalp.Client.Views.TickerDetailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:QScalp.Client.ViewModels"
+             xmlns:enums="clr-namespace:QScalp.Shared.Models;assembly=QScalp.Shared"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <UserControl.Resources>
+        <ObjectDataProvider x:Key="ClusterBaseValues" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="enums:ClusterBase"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <!-- Список детекторов, сгруппированный по Category. Шапки секций
+             (Современные / Legacy) рендерятся через GroupStyle ниже. -->
+        <CollectionViewSource x:Key="DetectorsView" Source="{Binding Detectors}">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="Category"/>
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Background="{StaticResource BgSurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="14,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Ticker}" FontSize="20" FontWeight="SemiBold"/>
+
+                    <!-- Цветной бейдж статуса (LIVE / WAIT / OFF) -->
+                    <Border Margin="14,0,0,0"
+                            CornerRadius="9" Padding="10,2"
+                            Background="{Binding StatusBgBrush}"
+                            BorderBrush="{Binding StatusAccentBrush}"
+                            BorderThickness="1"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{Binding StatusBadgeText}"
+                                   FontSize="11" FontWeight="Bold"
+                                   Foreground="{Binding StatusAccentBrush}"/>
+                    </Border>
+
+                    <TextBlock Margin="14,0,0,0" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center">
+                        <Run Text="{Binding Status, Mode=OneWay}"/>
+                        <Run Text="  •  сигналов: "/>
+                        <Run Text="{Binding SignalCount, Mode=OneWay}"
+                             Foreground="{Binding SignalCountBrush}"
+                             FontWeight="SemiBold"/>
+                        <Run Text="  •  баров: "/>
+                        <Run Text="{Binding ClusterCount, Mode=OneWay}"
+                             Foreground="{StaticResource FgBrush}"/>
+                        <Run Text="  •  посл. трейд: "/>
+                        <Run Text="{Binding LastTradeText, Mode=OneWay}"
+                             FontFamily="Consolas"/>
+                    </TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="▶ Старт"
+                            Style="{StaticResource SuccessButton}"
+                            Command="{Binding DataContext.StartTickerCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            Margin="0,0,8,0"/>
+                    <Button Content="■ Стоп"
+                            Style="{StaticResource DangerButton}"
+                            Command="{Binding DataContext.StopTickerCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Body tabs -->
+        <TabControl Grid.Row="1" Padding="14">
+            <!-- Tab: Settings -->
+            <TabItem Header="Настройки">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="14,12,14,14" MaxWidth="780" HorizontalAlignment="Left">
+
+                        <!-- ============ Подключение ================================== -->
+                        <GroupBox Header="Подключение">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="200"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Style="{StaticResource FieldLabel}" Text="SecKey"/>
+                                <TextBox   Grid.Column="1"
+                                           Text="{Binding SecKey, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Внутренний идентификатор бумаги, передаётся серверу в команде Subscribe. По умолчанию равен тикеру."/>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- ============ Параметры кластеров =========================== -->
+                        <GroupBox Header="Параметры кластеров"
+                                  Tag="Применяется после Стоп → Старт">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="200"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Style="{StaticResource FieldLabel}" Text="Шаг цены (PriceStep)"/>
+                                <TextBox   Grid.Column="1"
+                                           Text="{Binding PriceStep, UpdateSourceTrigger=LostFocus}"/>
+                                <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Шаг цены в IntPrice (raw × 10⁶). Для бумаги с шагом 0,01 ставьте 10000; для шага 1,0 — 1000000."/>
+
+                                <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="Тип кластера (ClusterBase)"/>
+                                <ComboBox  Grid.Row="2" Grid.Column="1"
+                                           ItemsSource="{Binding Source={StaticResource ClusterBaseValues}}"
+                                           SelectedItem="{Binding ClusterBase}"/>
+                                <TextBlock Grid.Row="3" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Чем определяется длительность одного кластера: Time — секунды, Volume — суммарный объём, Range — диапазон цен, Ticks — число сделок, Delta — разница покупок и продаж."/>
+
+                                <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="Размер кластера (ClusterSize)"/>
+                                <TextBox   Grid.Row="4" Grid.Column="1"
+                                           Text="{Binding ClusterSize, UpdateSourceTrigger=LostFocus}"/>
+                                <TextBlock Grid.Row="5" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Размер в единицах ClusterBase. Для Time — это секунды (60 = 1 минута). Для Volume — лоты, для Range — тики, и т. д."/>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- ============ Антиспам сигналов ============================= -->
+                        <GroupBox Header="Антиспам сигналов"
+                                  Tag="Применяется после Стоп → Старт">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="220"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Style="{StaticResource FieldLabel}" Text="Интервал повторов, сек."/>
+                                <TextBox   Grid.Column="1"
+                                           Text="{Binding MinSignalIntervalSeconds, UpdateSourceTrigger=LostFocus}"/>
+                                <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Один и тот же сигнал (детектор + тип + направление) не будет повторяться чаще этого интервала. Рекомендация: 30–120 секунд."/>
+
+                                <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="Кластеров между повторами"/>
+                                <TextBox   Grid.Row="2" Grid.Column="1"
+                                           Text="{Binding MinBarsBetweenRepeatedSignals, UpdateSourceTrigger=LostFocus}"/>
+                                <TextBlock Grid.Row="3" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Дополнительная защита: сколько закрытых кластеров надо пропустить перед повтором того же сигнала. Рекомендация: 3–10."/>
+
+                                <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="Макс. сигналов на кластер"/>
+                                <TextBox   Grid.Row="4" Grid.Column="1"
+                                           Text="{Binding MaxSignalsPerCluster, UpdateSourceTrigger=LostFocus}"/>
+                                <TextBlock Grid.Row="5" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Если одновременно сработало много детекторов, наружу уйдёт только указанное число сигналов. 0 — без лимита. Рекомендация: 1–3."/>
+
+                                <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="Мин. сила сигнала"/>
+                                <TextBox   Grid.Row="6" Grid.Column="1"
+                                           Text="{Binding MinSignalStrength, UpdateSourceTrigger=LostFocus}"/>
+                                <TextBlock Grid.Row="7" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Фильтр по Strength. 0.0 — не фильтровать; 0.5 — показывать только средние и сильные; 0.75 — только сильные."/>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- ============ Trade Ticket ================================== -->
+                        <GroupBox Header="Trade Ticket в Striker"
+                                  Tag="Заполняет окно тикета, но не отправляет ордер">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="220"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <CheckBox Grid.Column="1"
+                                          Content="Автоматически заполнять Trade Ticket при сигнале"
+                                          IsChecked="{Binding AutoFillTradeTicket}"
+                                          Margin="0,4,0,0"/>
+                                <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Сторона выбирается по направлению сигнала: Up → Buy, Down → Sell. Striker только открывает/заполняет тикет; отправка заявки остаётся ручной."/>
+
+                                <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="Мин. сила для тикета"/>
+                                <TextBox   Grid.Row="2" Grid.Column="1"
+                                           Text="{Binding TradeTicketMinSignalStrength, UpdateSourceTrigger=LostFocus}"/>
+                                <TextBlock Grid.Row="3" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Дополнительный фильтр именно для Trade Ticket. Например 0,75 — только сильные сигналы."/>
+
+                                <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="Количество акций"/>
+                                <TextBox   Grid.Row="4" Grid.Column="1"
+                                           Text="{Binding TradeTicketQuantity, UpdateSourceTrigger=LostFocus}"/>
+                                <TextBlock Grid.Row="5" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Количество попадёт в окно Trade Ticket Striker. Значение должно быть больше 0."/>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- ============ История и журнал ============================= -->
+                        <GroupBox Header="История и журнал"
+                                  Tag="HistoryCapacity применяется после Стоп → Старт">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="200"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Style="{StaticResource FieldLabel}" Text="Глубина истории кластеров"/>
+                                <TextBox   Grid.Column="1"
+                                           Text="{Binding HistoryCapacity, UpdateSourceTrigger=LostFocus}"/>
+                                <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Сколько последних закрытых кластеров хранится в памяти для оконных формул детекторов. Рекомендация: 64–128. Чем больше — тем дольше «помнит» паттерны DoubleTop/Distribution и т. п."/>
+
+                                <CheckBox Grid.Row="2" Grid.Column="1"
+                                          Content="Дублировать сигналы в CSV-файл"
+                                          IsChecked="{Binding LogToCsv}"
+                                          Margin="0,4,0,0"
+                                          ToolTip="Файл будет создан в папке signals\signals_{ТИКЕР}.csv рядом с QScalp.Client.exe."/>
+
+                                <CheckBox Grid.Row="3" Grid.Column="1"
+                                          Content="Сохранять закрытые кластеры в JSON"
+                                          IsChecked="{Binding ExportClustersToJson}"
+                                          Margin="0,8,0,0"
+                                          ToolTip="Каждый закрытый бар дописывается в JSONL. Можно включить на лету; при Старте файл пересоздаётся."/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0"
+                                           Style="{StaticResource FieldLabel}"
+                                           Text="Файл экспорта"/>
+                                <TextBox Grid.Row="4" Grid.Column="1"
+                                         Text="{Binding ClustersExportPath, Mode=OneWay}"
+                                         IsReadOnly="True"
+                                         FontFamily="Consolas"
+                                         ToolTip="Папка clusters рядом с QScalp.Client.exe"/>
+
+                                <TextBlock Grid.Row="5" Grid.ColumnSpan="2"
+                                           Style="{StaticResource FieldHint}"
+                                           Text="Для сверки с WPF: те же ClusterBase/ClusterSize/PriceStep. В логе — «cluster JSON → …» при старте и «first bar written» после первого бара. При Стоп незакрытый бар тоже дописывается."/>
+                            </Grid>
+                        </GroupBox>
+
+                        <Border BorderBrush="{StaticResource AccentBrush}"
+                                BorderThickness="0,0,0,2"
+                                Background="{StaticResource AccentDimBrush}"
+                                Padding="12,8" CornerRadius="3"
+                                Margin="0,4,0,0">
+                            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource FgBrush}">
+                                <Run Text="Подсказка:" FontWeight="Bold"/>
+                                <Run Text=" параметры кластера применяются только после рестарта анализа (Стоп → Старт). Параметры детекторов на вкладке «Детекторы» меняются на лету. Не забудьте «Сохранить» в шапке окна, чтобы записать всё в client.json."/>
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab: Detectors -->
+            <TabItem Header="Детекторы">
+                <DockPanel>
+                    <!-- ============== Тулбар детекторов ===================== -->
+                    <Border DockPanel.Dock="Top"
+                            Background="{StaticResource BgSurfaceBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="0,0,0,1"
+                            Padding="12,10">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <Button Content="✓ Включить все"
+                                        Style="{StaticResource GhostSuccessButton}"
+                                        Command="{Binding EnableAllDetectorsCommand}"
+                                        Padding="10,4" Margin="0,0,8,0"/>
+                                <Button Content="✗ Выключить все"
+                                        Style="{StaticResource GhostDangerButton}"
+                                        Command="{Binding DisableAllDetectorsCommand}"
+                                        Padding="10,4"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Детекторы"
+                                           FontWeight="Bold" FontSize="14"
+                                           VerticalAlignment="Center"/>
+                                <Border Style="{StaticResource CountPill}"
+                                        Margin="10,0,0,0">
+                                    <TextBlock Text="{Binding EnabledDetectorsText}"
+                                               Style="{StaticResource CountPillText}"/>
+                                </Border>
+                                <TextBlock Margin="14,0,0,0"
+                                           Foreground="{StaticResource MutedBrush}"
+                                           FontSize="11"
+                                           VerticalAlignment="Center"
+                                           Text="Параметры применяются на лету. Чекбокс слева включает/выключает детектор."/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- ============== Список детекторов ===================== -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14,8,14,14">
+                        <ItemsControl ItemsSource="{Binding Source={StaticResource DetectorsView}}">
+                            <ItemsControl.GroupStyle>
+                                <GroupStyle>
+                                    <GroupStyle.ContainerStyle>
+                                        <Style TargetType="GroupItem">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="GroupItem">
+                                                        <StackPanel>
+                                                            <DockPanel>
+                                                                <Border Style="{StaticResource CountPill}"
+                                                                        DockPanel.Dock="Right"
+                                                                        Margin="8,0,0,0">
+                                                                    <TextBlock Style="{StaticResource CountPillText}"
+                                                                               Text="{Binding ItemCount}"/>
+                                                                </Border>
+                                                                <TextBlock Style="{StaticResource SectionHeader}"
+                                                                           Text="{Binding Name}"/>
+                                                            </DockPanel>
+                                                            <ItemsPresenter/>
+                                                        </StackPanel>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </GroupStyle.ContainerStyle>
+                                </GroupStyle>
+                            </ItemsControl.GroupStyle>
+
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:DetectorVM}">
+                                    <Border Margin="0,4"
+                                            Background="{StaticResource BgSurfaceBrush}"
+                                            BorderBrush="{StaticResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Enabled}" Value="True">
+                                                        <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="4"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Левая цветная полоса: зелёная при Enabled=true -->
+                                            <Border Grid.Column="0">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{StaticResource BorderBrush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Enabled}" Value="True">
+                                                                <Setter Property="Background" Value="{StaticResource SuccessBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" Margin="14,12,14,12">
+                                                <!-- Шапка карточки: чекбокс + имя + бейджи -->
+                                                <DockPanel>
+                                                    <Border DockPanel.Dock="Right"
+                                                            Style="{StaticResource CountPill}">
+                                                        <TextBlock Style="{StaticResource CountPillText}">
+                                                            <Run Text="параметров: "/>
+                                                            <Run Text="{Binding ParameterCount, Mode=OneWay}"/>
+                                                        </TextBlock>
+                                                    </Border>
+                                                    <CheckBox IsChecked="{Binding Enabled}"
+                                                              VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding Name}"
+                                                               FontWeight="Bold" FontSize="15"
+                                                               Margin="10,0,8,0"
+                                                               VerticalAlignment="Center"/>
+                                                </DockPanel>
+
+                                                <!-- Описание детектора -->
+                                                <TextBlock Text="{Binding Description}"
+                                                           Foreground="{StaticResource MutedBrush}"
+                                                           FontSize="11"
+                                                           TextWrapping="Wrap"
+                                                           Margin="26,4,80,0"/>
+
+                                                <!-- Сетка параметров -->
+                                                <ItemsControl ItemsSource="{Binding Parameters}" Margin="26,10,0,0">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <UniformGrid Columns="2"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate DataType="{x:Type vm:DetectorParamVM}">
+                                                            <Border Margin="0,2,16,2"
+                                                                    Padding="6,4"
+                                                                    CornerRadius="3"
+                                                                    Background="#23262A"
+                                                                    ToolTip="{Binding Tooltip}">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="120"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <StackPanel>
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <TextBlock Text="{Binding Name}"
+                                                                                       Foreground="{StaticResource FgBrush}"
+                                                                                       FontWeight="SemiBold"
+                                                                                       FontSize="12"/>
+                                                                            <TextBlock Text="{Binding TypeName, StringFormat= ({0})}"
+                                                                                       Foreground="{StaticResource MutedBrush}"
+                                                                                       FontSize="10"
+                                                                                       VerticalAlignment="Center"/>
+                                                                        </StackPanel>
+                                                                        <TextBlock Text="{Binding Description}"
+                                                                                   Foreground="{StaticResource MutedBrush}"
+                                                                                   FontSize="10"
+                                                                                   TextWrapping="Wrap"
+                                                                                   Margin="0,2,8,0"/>
+                                                                    </StackPanel>
+                                                                    <ContentControl Grid.Column="1"
+                                                                                    VerticalAlignment="Center">
+                                                                        <ContentControl.Style>
+                                                                            <Style TargetType="ContentControl">
+                                                                                <Setter Property="Content">
+                                                                                    <Setter.Value>
+                                                                                        <TextBox Text="{Binding ValueText, UpdateSourceTrigger=LostFocus}"
+                                                                                                 HorizontalContentAlignment="Right"
+                                                                                                 FontFamily="Consolas"/>
+                                                                                    </Setter.Value>
+                                                                                </Setter>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsBool}" Value="True">
+                                                                                        <Setter Property="Content">
+                                                                                            <Setter.Value>
+                                                                                                <CheckBox IsChecked="{Binding BoolValue}"
+                                                                                                          HorizontalAlignment="Right"
+                                                                                                          VerticalAlignment="Center"/>
+                                                                                            </Setter.Value>
+                                                                                        </Setter>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </ContentControl.Style>
+                                                                    </ContentControl>
+                                                                </Grid>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
+
+            <!-- Tab: Signals -->
+            <TabItem Header="Сигналы">
+                <DataGrid ItemsSource="{Binding Signals}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          HeadersVisibility="Column"
+                          SelectionUnit="FullRow"
+                          CanUserResizeRows="False"
+                          GridLinesVisibility="None"
+                          RowStyle="{StaticResource SignalRowStyle}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Время"     Binding="{Binding TimeText}"    Width="80">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                    <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Источник"  Binding="{Binding Source}"      Width="160">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Kind"      Binding="{Binding Kind}"        Width="180">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Dir"       Binding="{Binding Direction}"   Width="60"
+                                            CellStyle="{StaticResource DirectionCellStyle}"/>
+                        <DataGridTextColumn Header="Цена"      Binding="{Binding Price}"       Width="100">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                    <Setter Property="HorizontalAlignment" Value="Right"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Сила"      Binding="{Binding StrengthText}" Width="70"
+                                            CellStyle="{StaticResource StrengthCellStyle}"/>
+                        <DataGridTextColumn Header="Сообщение" Binding="{Binding Message}"     Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <!-- Tab: Log -->
+            <TabItem Header="Лог">
+                <ListBox ItemsSource="{Binding Log}"
+                         FontFamily="Consolas"
+                         BorderThickness="0"
+                         ItemContainerStyle="{StaticResource LogItemStyle}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Text}"
+                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem},
+                                                            Path=Foreground}"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

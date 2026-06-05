@@ -1,0 +1,6 @@
+{
+  "ServerUrl": "ws://127.0.0.1:9500/",
+  "Tickers": [ "TSLA" ],
+  "OutputDirectory": "Records",
+  "RecordSnapshots": false
+}
